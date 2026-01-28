@@ -1,0 +1,53 @@
+{% extends "irrbb_app/base.html" %}
+{% block title %}Panel IRRBB{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Resumen rápido</h2>
+    <p><strong>Balances:</strong> {{ banks_count|add:"-1" }} | <strong>Contratos:</strong> {{ contracts_count }}</p>
+    <p>Accede a <a href="{% url 'upload_contracts' %}">Subir Excel</a> para cargar nuevos contratos y recalcular métricas.</p>
+</div>
+
+<div class="card">
+    <h3>Últimos cálculos</h3>
+    {% if latest_results %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID_empleado</th>
+                <th>Fecha cálculo</th>
+                <th>EVE base</th>
+                <th>EVE parallel shock up</th>
+                <th>EVE parallel shock down</th>
+                <th>EVE steepener</th>
+                <th>EVE flattener</th>
+                <th>EVE short shock up</th>
+                <th>EVE short shock down</th>
+                <th>NII base</th>
+                <th>NII parallel shock up</th>
+                <th>NII parallel shock down</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in latest_results %}
+            <tr>
+                <td>{{ r.uploaded_by.username }}</td>
+                <td>{{ r.fecha_calculo|date:"Y-m-d H:i" }}</td>
+                <td>{{ r.eve_base|floatformat:2 }}</td>
+                <td>{{ r.eve_parallel_up|floatformat:2 }}</td>
+                <td>{{ r.eve_parallel_down|floatformat:2 }}</td>
+                <td>{{ r.eve_steepener|floatformat:2 }}</td>
+                <td>{{ r.eve_flattener|floatformat:2 }}</td>
+                <td>{{ r.eve_short_up|floatformat:2 }}</td>
+                <td>{{ r.eve_short_down|floatformat:2 }}</td>
+                <td>{{ r.nii_base|floatformat:2 }}</td>
+                <td>{{ r.nii_parallel_up|floatformat:2 }}</td>
+                <td>{{ r.nii_parallel_down|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No hay cálculos registrados todavía.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "irrbb_app/base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 420px; margin: 0 auto;">
+    <h2>Acceso</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label for="id_username">Usuario</label>
+        {{ form.username }}
+        <label for="id_password">Contraseña</label>
+        {{ form.password }}
+        <button type="submit" class="btn" style="margin-top: 16px; width: 100%;">Entrar</button>
+    </form>
+</div>
+{% endblock %}

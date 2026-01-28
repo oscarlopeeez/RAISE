@@ -1,0 +1,22 @@
+{% extends "irrbb_app/base.html" %}
+{% block title %}Subir contratos{% endblock %}
+{% block content %}
+
+<div class="card" style="max-width: 700px;">
+    <h2>Subir Excel de contratos</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="id_id_empleado">ID del empleado que sube el balance</label>
+        {{ form.id_empleado }}
+
+        <label for="id_excel_file">Archivo</label>
+        {{ form.excel_file }}
+
+        <button type="submit" class="btn" style="margin-top: 16px;">Importar</button>
+    </form>
+    <p style="margin-top: 10px; font-size: 14px;">Columnas esperadas: NumeroContrato, Producto, ActivoPasivo, Nominal, FechaInicio, FechaVencimiento, TipoInteres, Amortizacion, CuponSpread, Curva, Frecuencia.</p>
+    <button type="download" class="btn" style="margin-top: 10px;">
+        <a href="{% url 'download_template' %}" style="color: white; text-decoration: none;">Descargar plantilla de ejemplo</a>
+    </button>
+</div>
+{% endblock %}

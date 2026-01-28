@@ -1,0 +1,51 @@
+{% extends "irrbb_app/base.html" %}
+{% block title %}Resultados históricos{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Histórico de cálculos</h2>
+    {% if resultados %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID_empleado</th>
+                <th>Fecha</th>
+                <th>EVE base</th>
+                <th>EVE parallel shock up</th>
+                <th>EVE parallel shock down</th>
+                <th>EVE steepener</th>
+                <th>EVE flattener</th>
+                <th>EVE short shock up</th>
+                <th>EVE short shock down</th>
+                <th>NII base</th>
+                <th>NII parallel shock up</th>
+                <th>NII parallel shock down</th>
+                <th>Detalle</th>
+                <th>Descargar J 03</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in resultados %}
+            <tr>
+                <td>{{ r.uploaded_by.username }}</td>
+                <td>{{ r.fecha_calculo|date:"Y-m-d H:i" }}</td>
+                <td>{{ r.eve_base|floatformat:2 }}</td>
+                <td>{{ r.eve_parallel_up|floatformat:2 }}</td>
+                <td>{{ r.eve_parallel_down|floatformat:2 }}</td>
+                <td>{{ r.eve_steepener|floatformat:2 }}</td>
+                <td>{{ r.eve_flattener|floatformat:2 }}</td>
+                <td>{{ r.eve_short_up|floatformat:2 }}</td>
+                <td>{{ r.eve_short_down|floatformat:2 }}</td>
+                <td>{{ r.nii_base|floatformat:2 }}</td>
+                <td>{{ r.nii_parallel_up|floatformat:2 }}</td>
+                <td>{{ r.nii_parallel_down|floatformat:2 }}</td>
+                <td><a href="{% url 'detail' r.pk %}" class="btn">Ver detalle</a></td>
+                <td><a href="{% url 'detail' r.pk %}?download=excel" class="btn secondary">Descargar</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No hay resultados registrados aún.</p>
+    {% endif %}
+</div>
+{% endblock %}

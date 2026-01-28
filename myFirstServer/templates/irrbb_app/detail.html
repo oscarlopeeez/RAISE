@@ -1,0 +1,143 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Detalle del Balance - {{ resultado.banco.nombre }}{% endblock %}
+{% block content %}
+
+<div class="card">
+    <h2>Balance: {{ resultado.banco.nombre }}</h2>
+    <p><strong>Fecha de cálculo:</strong> {{ resultado.fecha_calculo|date:"d/m/Y H:i" }}</p>
+</div>
+
+<div class="card">
+    <h3>Métricas EVE (Economic Value of Equity)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Escenario</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Base</td>
+                <td>{{ resultado.eve_base|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Parallel shock up</td>
+                <td>{{ resultado.eve_parallel_up|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Parallel shock down</td>
+                <td>{{ resultado.eve_parallel_down|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Steepener</td>
+                <td>{{ resultado.eve_steepener|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Flattener</td>
+                <td>{{ resultado.eve_flattener|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Short shock up</td>
+                <td>{{ resultado.eve_short_up|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Short shock down</td>
+                <td>{{ resultado.eve_short_down|floatformat:2|intcomma }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Métricas NII (Net Interest Income)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Escenario</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Base</td>
+                <td>{{ resultado.nii_base|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Parallel shock up</td>
+                <td>{{ resultado.nii_parallel_up|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Parallel shock down</td>
+                <td>{{ resultado.nii_parallel_down|floatformat:2|intcomma }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Desglose por tipo de producto</h3>    
+    <h4>Contratos Activos</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Nominal Total</th>
+                <th>EVE Base</th>
+                <th>NII Base</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if activos %}
+                {% for producto, datos in activos.items %}
+                <tr>
+                    <td>{{ producto }}</td>
+                    <td>{{ datos.count }}</td>
+                    <td>{{ datos.nominal|floatformat:2|intcomma }}</td>
+                    <td>{{ datos.scenario.eve_base|floatformat:2|intcomma }}</td>
+                    <td>{{ datos.scenario.nii_base|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="5">No hay contratos activos</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <h4 style="margin-top: 24px;">Contratos Pasivos</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Nominal Total</th>
+                <th>EVE Base</th>
+                <th>NII Base</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if pasivos %}
+                {% for producto, datos in pasivos.items %}
+                <tr>
+                    <td>{{ producto }}</td>
+                    <td>{{ datos.count }}</td>
+                    <td>{{ datos.nominal|floatformat:2|intcomma }}</td>
+                    <td>{{ datos.scenario.eve_base|floatformat:2|intcomma }}</td>
+                    <td>{{ datos.scenario.nii_base|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="5">No hay contratos pasivos</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="?download=excel" class="btn primary">📥 Descargar Excel</a>
+    <a href="{% url 'results_history' %}" class="btn secondary">← Volver a resultados</a>
+</div>
+
+{% endblock %}

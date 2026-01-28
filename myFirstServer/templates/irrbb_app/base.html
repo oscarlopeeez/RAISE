@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IRRBB{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #0d1117; color: #e6edf3; }
+        header { background: #161b22; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        nav a { color: #e6edf3; margin-right: 16px; text-decoration: none; font-weight: 600; }
+        nav a:hover { color: #58a6ff; }
+        .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+        .btn { display: inline-block; padding: 10px 16px; background: #238636; color: #fff; border-radius: 6px; text-decoration: none; border: none; cursor: pointer; }
+        .btn.secondary { background: #30363d; color: #e6edf3; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #30363d; text-align: left; }
+        th { background: #0d1117; }
+        .messages { margin-bottom: 16px; }
+        .message { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+        .message.success { background: #132d18; border: 1px solid #238636; }
+        .message.error { background: #2d1414; border: 1px solid #f85149; }
+        .message.warning { background: #2b2113; border: 1px solid #c69026; }
+        form label { display: block; margin-top: 12px; font-weight: 600; }
+        form input, form select { width: 100%; padding: 10px; margin-top: 6px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; }
+    </style>
+</head>
+<body>
+<header>
+    <div><strong>RAISE</strong></div>
+    <nav>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Panel</a>
+            <a href="{% url 'upload_contracts' %}">Subir Excel</a>
+            <a href="{% url 'results_history' %}">Resultados</a>
+            <a href="{% url 'logout' %}">Salir</a>
+        {% else %}
+            <a href="{% url 'start' %}">Inicio</a>
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Registro</a>
+        {% endif %}
+    </nav>
+</header>
+<div class="container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

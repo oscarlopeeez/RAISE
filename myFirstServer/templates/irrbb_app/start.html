@@ -1,0 +1,12 @@
+{% extends "irrbb_app/base.html" %}
+{% block title %}Panel IRRBB{% endblock %}
+{% block content %}
+<div class = inicio>
+    <h1>Bienvenido al sistema de gestión IRRBB</h1>
+    <p>Antes de comenzar es necesario que se registre o inicie sesión.</p>
+    <div class="botones-inicio">
+        <a href="{% url 'login' %}" class="btn">Iniciar sesión</a>
+        <a href="{% url 'register' %}" class="btn">Registrarse</a>
+    </div>
+</div>
+{% endblock %}
