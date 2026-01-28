@@ -8,6 +8,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import FormView, ListView, TemplateView
 
+from myFirstServer.users.models import CustomUser
+
 from .forms import UploadContractsForm
 from .models import Banco, Contrato, ResultadoBalance
 from .services import contract_pricing, import_excel
