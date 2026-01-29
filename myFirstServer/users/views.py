@@ -116,7 +116,7 @@ class LogoutView(APIView):
 
 
 class SignupPageView(FormView):
-    template_name = "irrbb_app/signup.html"
+    template_name = "irrbb_app/register.html"
     form_class = CustomUserCreationForm
     success_url = reverse_lazy("dashboard")
 

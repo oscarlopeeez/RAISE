@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import FormView, ListView, TemplateView
 
-from myFirstServer.users.models import CustomUser
+from users.models import CustomUser
 
 from .forms import UploadContractsForm
 from .models import Banco, Contrato, ResultadoBalance
@@ -62,9 +62,9 @@ class UploadContractsView(LoginRequiredMixin, FormView):
                 return self.form_invalid(form)
             
             count = import_excel.load_contracts_from_excel(form.cleaned_data["excel_file"], banco)
-            messages.success(self.request, f"✓ Importados {count} contratos correctamente")
+            messages.success(self.request, f" Importados {count} contratos correctamente")
         except Exception as e:
-            messages.error(self.request, f"❌ Error: {str(e)}")
+            messages.error(self.request, f" Error: {str(e)}")
             return self.form_invalid(form)
 
         contract_pricing.run_balance_pricing(banco, uploaded_by=uploaded_by)
@@ -100,27 +100,24 @@ class DetailView(LoginRequiredMixin, TemplateView):
             cf = build_cashflows(contrato, curve_df, valuation_date)
             
             if contrato.activo_pasivo == "ACTIVO":
-                if contrato.producto not in activos:
-                    activos[contrato.producto] = {"count": 0, "nominal": 0}
-                    activos_cashflows[contrato.producto] = []
-                activos[contrato.producto]["count"] += 1
-                activos[contrato.producto]["nominal"] += contrato.nominal
-                if not cf.empty:
-                    activos_cashflows[contrato.producto].append(cf)
+                self._act_dict(contrato.producto, contrato, cf, activos, activos_cashflows)
             else:
-                if contrato.producto not in pasivos:
-                    pasivos[contrato.producto] = {"count": 0, "nominal": 0}
-                    pasivos_cashflows[contrato.producto] = []
-                pasivos[contrato.producto]["count"] += 1
-                pasivos[contrato.producto]["nominal"] += contrato.nominal
-                if not cf.empty:
-                    pasivos_cashflows[contrato.producto].append(cf)
+                self._act_dict(contrato.producto, contrato, cf, pasivos, pasivos_cashflows)
         
         #Calcular EVE y NII para cada producto
         self._calculate_eve_nii(activos, activos_cashflows, curve_df)
         self._calculate_eve_nii(pasivos, pasivos_cashflows, curve_df)
         
         return activos, pasivos 
+    
+    def _act_dict(self, producto, contrato, cf, dict_obj, dict_cf):
+        if producto not in dict_obj:
+            dict_obj[producto] = {"count": 0, "nominal": 0}
+            dict_cf[producto] = []
+        dict_obj[producto]["count"] += 1
+        dict_obj[producto]["nominal"] += contrato.nominal
+        if not cf.empty:
+            dict_cf[producto].append(cf)
 
 # Activos es del tipo: "Central bank" : {"count": X,
 #                                        "nominal": Y, 
