@@ -41,7 +41,7 @@ class UploadContractsView(LoginRequiredMixin, FormView):
         
         # Buscar el usuario por username
         try:
-            uploaded_by = CustomUser.objects.get(username=id_empleado)
+            uploaded_by = CustomUser.objects.get(id=id_empleado)
         except CustomUser.DoesNotExist:
             messages.error(self.request, f"❌ No existe un usuario con ID: {id_empleado}")
             return self.form_invalid(form)

@@ -51,7 +51,7 @@ class Contrato(models.Model):
 
 class ResultadoBalance(models.Model):
     banco = models.ForeignKey(Banco, on_delete=models.CASCADE, related_name="resultados")
-    uploaded_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True)
+    uploaded_by = models.ForeignKey('users.CustomUser', related_name = "mis_resultados", on_delete=models.SET_NULL, null=True)
     fecha_calculo = models.DateTimeField(auto_now_add=True)
 
     eve_base = models.FloatField(default=0)

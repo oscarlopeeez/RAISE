@@ -2,10 +2,9 @@ import pandas as pd
 from ..models import Contrato
 
 
-def load_contracts_from_excel(archivo, banco, curva):
+def load_contracts_from_excel(archivo, banco, curva="EURIBOR"):
     df = pd.read_excel(archivo)
     df.columns = df.columns.str.lower()
-
     for i, row in df.iterrows():
         c = Contrato()
         c.banco = banco
