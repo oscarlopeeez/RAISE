@@ -1,7 +1,5 @@
-from datetime import date
 from django.http import HttpResponse, Http404
 from openpyxl import Workbook
-import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
@@ -13,10 +11,8 @@ from users.models import CustomUser
 from .forms import UploadContractsForm
 from .models import Banco, Contrato, ResultadoBalance
 from .services import contract_pricing, import_excel
-from .services.cashflows import build_cashflows
+from .services.contract_pricing import _process_contracts
 from .services.curve import build_default_curve
-from .services.eve_calculation import calculate_eve
-from .services.nii_calculation import calculate_nii
 from .services.export_j03 import export_excel
 
 
@@ -34,29 +30,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class UploadContractsView(LoginRequiredMixin, FormView):
     form_class = UploadContractsForm  #qué formulario usar
     template_name = "irrbb_app/upload.html"
-    success_url = reverse_lazy("dashboard")   #dónde ir después de procesar el formulario
-
+    success_url = reverse_lazy("dashboard")   
+    
     def form_valid(self, form):   #cuando el formulario es válido
         id_empleado = form.cleaned_data["id_empleado"]
         
-        # Buscar el usuario por username
         try:
             uploaded_by = CustomUser.objects.get(id=id_empleado)
         except CustomUser.DoesNotExist:
-            messages.error(self.request, f"❌ No existe un usuario con ID: {id_empleado}")
+            messages.error(self.request, f"No existe un usuario con ID: {id_empleado}")
             return self.form_invalid(form)
         
-        # Obtener el banco del usuario
         banco = uploaded_by.bank_name
         if not banco:
-            messages.error(self.request, "❌ El usuario no tiene un banco asociado")
+            messages.error(self.request, "El usuario no tiene un banco asociado")
             return self.form_invalid(form)
 
         try:
             es_valido, errores = import_excel.validate_contracts_excel(form.cleaned_data["excel_file"])
             
             if not es_valido:
-                messages.error(self.request, "⚠️ ERRORES EN EL EXCEL - Importación cancelada:")
+                messages.error(self.request, "Hay errores en el excel - Importación cancelada:")
                 for e in errores:
                     messages.error(self.request, e)
                 return self.form_invalid(form)
@@ -77,74 +71,22 @@ class ResultsHistoryView(LoginRequiredMixin, ListView):
     context_object_name = "resultados"
     paginate_by = 20
 
+    def get_queryset(self):
+        user_banco = self.request.user.bank_name
+        if user_banco:
+            return ResultadoBalance.objects.filter(banco=user_banco)
+        return ResultadoBalance.objects.none()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        bancos = Banco.objects.all()
-        context["banks"] = bancos
+        if self.request.user.bank_name:
+            context["banks"] = [self.request.user.bank_name]
+        else:
+            context["banks"] = []
         return context
 
 class DetailView(LoginRequiredMixin, TemplateView):
     template_name = "irrbb_app/detail.html"
-
-    def _process_contracts(self, resultado, curve_df):
-        activos = {}
-        pasivos = {}
-        activos_cashflows = {}
-        pasivos_cashflows = {}
-
-        valuation_date = date.today()
-        contratos = resultado.banco.contratos.all()
-
-        #Agrupar contratos por producto y tipo
-        for contrato in contratos:
-            cf = build_cashflows(contrato, curve_df, valuation_date)
-            
-            if contrato.activo_pasivo == "ACTIVO":
-                self._act_dict(contrato.producto, contrato, cf, activos, activos_cashflows)
-            else:
-                self._act_dict(contrato.producto, contrato, cf, pasivos, pasivos_cashflows)
-        
-        #Calcular EVE y NII para cada producto
-        self._calculate_eve_nii(activos, activos_cashflows, curve_df)
-        self._calculate_eve_nii(pasivos, pasivos_cashflows, curve_df)
-        
-        return activos, pasivos 
-    
-    def _act_dict(self, producto, contrato, cf, dict_obj, dict_cf):
-        if producto not in dict_obj:
-            dict_obj[producto] = {"count": 0, "nominal": 0}
-            dict_cf[producto] = []
-        dict_obj[producto]["count"] += 1
-        dict_obj[producto]["nominal"] += contrato.nominal
-        if not cf.empty:
-            dict_cf[producto].append(cf)
-
-# Activos es del tipo: "Central bank" : {"count": X,
-#                                        "nominal": Y, 
-#                                        "eve": { "base": Z, 
-#                                                 "parallel_up": W, ...
-#                                                 }, 
-#                                        "nii": {...} 
-#                                        }
-
-# ResultadoBalance.objects es del tipo: "eve_base": X,
-#                                   "eve_parallel_up": Y,
-#                                  ...
-#                                  "nii_parallel_down": Z
-#  
-    def _calculate_eve_nii(self, productos_dict, cashflows_dict, curve_df):
-        for producto in productos_dict:
-            cf_grupo = pd.concat(cashflows_dict[producto], ignore_index=True)
-            eve_res = calculate_eve(cf_grupo, curve_df)
-            nii_res = calculate_nii(cf_grupo, curve_df)
-
-            scenario = {}
-            for key, val in eve_res.items():
-                scenario[key] = val
-            for key, val in nii_res.items():
-                scenario[key] = val
-
-            productos_dict[producto]["scenario"] = scenario
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("download") == "excel":
@@ -155,7 +97,7 @@ class DetailView(LoginRequiredMixin, TemplateView):
         try:
             resultado = ResultadoBalance.objects.get(pk=self.kwargs["pk"])
             curve_df = build_default_curve()
-            activos, pasivos = self._process_contracts(resultado, curve_df)
+            activos, pasivos = _process_contracts(resultado.banco, curve_df)
             return export_excel(resultado.fecha_calculo.strftime("%Y-%m-%d"), activos, pasivos, resultado.banco.nombre)
         
         except ResultadoBalance.DoesNotExist:
@@ -168,7 +110,7 @@ class DetailView(LoginRequiredMixin, TemplateView):
         try:
             resultado = ResultadoBalance.objects.get(pk=self.kwargs["pk"])
             curve_df = build_default_curve()
-            activos, pasivos = self._process_contracts(resultado, curve_df)
+            activos, pasivos = _process_contracts(resultado.banco, curve_df)
             
             return {
                 "resultado": resultado,

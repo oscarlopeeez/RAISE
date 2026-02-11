@@ -4,7 +4,7 @@
 {% block content %}
 
 <div class="card">
-    <h2>Balance: {{ resultado.banco.nombre }}</h2>
+    <h2>Banco: {{ resultado.banco.nombre }}</h2>
     <p><strong>Fecha de cálculo:</strong> {{ resultado.fecha_calculo|date:"d/m/Y H:i" }}</p>
 </div>
 
@@ -136,7 +136,7 @@
 </div>
 
 <div style="margin-top: 20px;">
-    <a href="?download=excel" class="btn primary">📥 Descargar Excel</a>
+    <a href="?download=excel" class="btn primary">Descargar J03</a>
     <a href="{% url 'results_history' %}" class="btn secondary">← Volver a resultados</a>
 </div>
 

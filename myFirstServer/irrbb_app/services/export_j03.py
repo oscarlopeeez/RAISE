@@ -2,7 +2,6 @@ import openpyxl
 from django.http import HttpResponse
 from datetime import datetime
 
-# Mapeo de códigos de escenarios
 SCENARIOS = {
     "eve_base": {"codigo": "0030", "columna": 6},
     "eve_parallel_up": {"codigo": "0040", "columna": 7},
@@ -16,7 +15,6 @@ SCENARIOS = {
     "nii_parallel_down": {"codigo": "0140", "columna": 15},
 }
 
-# Mapeo de productos activos
 PRODUCTS_ACTIVOS = {
     "Central bank": {"codigo": "0030", "fila": 13},
     "Interbank": {"codigo": "0040", "fila": 14},
@@ -28,7 +26,6 @@ PRODUCTS_ACTIVOS = {
     "Other": {"codigo": "0180", "fila": 20},
 }
 
-# Mapeo de productos pasivos
 PRODUCTS_PASIVOS = {
     "Central bank": {"codigo": "0220", "fila": 23},
     "Interbank": {"codigo": "0230", "fila": 24},
@@ -48,7 +45,6 @@ def export_excel(fecha, activos, pasivos, banco_name):
     wb = openpyxl.load_workbook(filename='template.xlsx')
     ws = wb.active
 
-    # Rellenar info básica
     ws["C3"] = banco_name
     ws["C4"] = "EUR"
     ws["C5"] = fecha

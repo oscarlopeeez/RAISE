@@ -4,6 +4,7 @@
 <div class="card">
     <h2>Histórico de cálculos</h2>
     {% if resultados %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -20,13 +21,13 @@
                 <th>NII parallel shock up</th>
                 <th>NII parallel shock down</th>
                 <th>Detalle</th>
-                <th>Descargar J 03</th>
+                <th>Descargar J03</th>
             </tr>
         </thead>
         <tbody>
             {% for r in resultados %}
             <tr>
-                <td>{{ r.uploaded_by.username }}</td>
+                <td>{{ r.uploaded_by.id }}</td>
                 <td>{{ r.fecha_calculo|date:"Y-m-d H:i" }}</td>
                 <td>{{ r.eve_base|floatformat:2 }}</td>
                 <td>{{ r.eve_parallel_up|floatformat:2 }}</td>
@@ -44,6 +45,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
         <p>No hay resultados registrados aún.</p>
     {% endif %}

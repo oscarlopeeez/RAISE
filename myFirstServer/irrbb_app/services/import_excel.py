@@ -31,7 +31,6 @@ def validate_contracts_excel(archivo):
     df = pd.read_excel(archivo)
     df.columns = df.columns.str.lower()
 
-    #Verificar columnas requeridas
     columns_error = []
     for col in columns_required:
         if col not in df.columns:
@@ -40,25 +39,21 @@ def validate_contracts_excel(archivo):
         errors.append("Columnas requeridas faltantes: " + ', '.join(columns_error))
         return False, errors
     
-    # Validar cada fila
     for i, row in df.iterrows():
         num_fila = i + 2
 
-        # Validar NumeroContrato
         try:
             if pd.isna(row.get('numerocontrato')):
                 errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: NumeroContrato está vacío.")
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: NumeroContrato está vacío.")
         
-        # Validar Producto
         try:
             if str(row.get('activopasivo')).upper() not in ['ACTIVO', 'PASIVO']:
                 errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: ActivoPasivo debe ser 'ACTIVO' o 'PASIVO'.")
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: ActivoPasivo debe ser 'ACTIVO' o 'PASIVO'.")
 
-        # Validar nominal
         try:
             nominal = float(row.get('nominal'))
             if nominal < 0:
@@ -66,7 +61,6 @@ def validate_contracts_excel(archivo):
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: Nominal debe ser un número válido.")
 
-        # Validar fechas
         try:
             start_date = pd.to_datetime(row.get('fechainicio'))
             finish_date = pd.to_datetime(row.get('fechavencimiento'))
@@ -75,21 +69,18 @@ def validate_contracts_excel(archivo):
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: Fechas no válidas.")
         
-        # Validar TipoInteres
         try:
             if str(row.get('tipointeres')).upper() not in ['FIJO', 'VARIABLE']:
                 errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: TipoInteres debe ser 'FIJO' o 'VARIABLE'.")
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: TipoInteres debe ser 'FIJO' o 'VARIABLE'.")
         
-        # Validar Amortizacion
         try:
             if str(row.get('amortizacion')).upper() not in ['FRANCESA', 'ALEMANA', 'BULLET']:
                 errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: Amortizacion debe ser 'FRANCESA', 'ALEMANA' o 'BULLET'.")
         except (ValueError, TypeError):
             errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: Amortizacion debe ser 'FRANCESA', 'ALEMANA' o 'BULLET'.")
         
-        # Validar CuponSpread
         try:
             if float(row.get('cuponspread')) < 0:
                 errors.append(f"Fila {num_fila}, {row.get('numerocontrato')}: CuponSpread debe ser un número positivo.")

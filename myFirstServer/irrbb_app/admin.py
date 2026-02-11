@@ -1,18 +1,11 @@
 from django.contrib import admin
 
-from .models import Banco, Curva, Contrato, ResultadoBalance
+from .models import Banco, Contrato, ResultadoBalance
 
 
 @admin.register(Banco)
 class BancoAdmin(admin.ModelAdmin):
     list_display = ("nombre", "created_at")
-    search_fields = ("nombre",)
-
-
-@admin.register(Curva)
-class CurvaAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "fecha")
-    list_filter = ("fecha",)
     search_fields = ("nombre",)
 
 

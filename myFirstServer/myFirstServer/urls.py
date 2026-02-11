@@ -25,7 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("register/", SignupPageView.as_view(), name="register"),
     path("login/", auth_views.LoginView.as_view(template_name="irrbb_app/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="start", http_method_names=['get', 'post', 'options']), name="logout"),
+    path("logout/", auth_views.LogoutView.as_view(template_name="irrbb_app/start.html"), name="logout"),
     path("users/", include("users.urls", namespace="users")),
     path("", include("irrbb_app.urls")),
 ]

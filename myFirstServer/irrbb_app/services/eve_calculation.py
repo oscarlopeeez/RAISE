@@ -12,14 +12,14 @@ SCENARIO_COLUMNS = {
 }
 
 # valor presente de los flujos de caja bajo diferentes escenarios de curva de tasas
-def discount_cashflows(cashflows_df: pd.DataFrame, curve_df: pd.DataFrame, curve_column: str): 
+def discount_cashflows(cashflows_df, curve_df, curve_column): 
     df = cashflows_df.copy()
     rates = np.interp(df["year"], curve_df["maturity_years"], curve_df[curve_column]) / 10000
     df["pv"] = df["cashflow"] / np.power(1 + rates, df["year"]) # PV = CF / (1+r)^t
     return df
 
 
-def calculate_eve(cashflows_df: pd.DataFrame, curve_df: pd.DataFrame):
+def calculate_eve(cashflows_df, curve_df):
     results = {}
 
     for scenario, col in SCENARIO_COLUMNS.items():

@@ -8,7 +8,7 @@ SCENARIO_COLUMNS = {
 }
 
 
-def calculate_nii(cashflows_df: pd.DataFrame, curve_df: pd.DataFrame, horizon_years = 1.0):
+def calculate_nii(cashflows_df, curve_df, horizon_years = 1.0):
     df = cashflows_df[cashflows_df["year"] <= horizon_years].copy()
     results = {}
     if len(df) == 0: # no hay flujos

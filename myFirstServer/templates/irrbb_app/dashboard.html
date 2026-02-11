@@ -10,6 +10,7 @@
 <div class="card">
     <h3>Últimos cálculos</h3>
     {% if latest_results %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -30,7 +31,7 @@
         <tbody>
             {% for r in latest_results %}
             <tr>
-                <td>{{ r.uploaded_by.username }}</td>
+                <td>{{ r.uploaded_by.id }}</td>
                 <td>{{ r.fecha_calculo|date:"Y-m-d H:i" }}</td>
                 <td>{{ r.eve_base|floatformat:2 }}</td>
                 <td>{{ r.eve_parallel_up|floatformat:2 }}</td>
@@ -46,6 +47,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
         <p>No hay cálculos registrados todavía.</p>
     {% endif %}

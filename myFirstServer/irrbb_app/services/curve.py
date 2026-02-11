@@ -9,7 +9,7 @@ EUR_SHOCKS_BP = {
 }
 
 class Curve:
-    def __init__(self, df_flatcurve: pd.DataFrame):
+    def __init__(self, df_flatcurve):
         self.df_flatcurve = df_flatcurve.copy()
         self.shocks = EUR_SHOCKS_BP
         self.curves = self.calculate_curves()
@@ -36,14 +36,12 @@ class Curve:
 
         return curve
 
-def build_default_curve(): # si no hay curva en BD creo una curva plana por defecto
+def build_default_curve():
     default_plazos = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "10Y"]
     default_rates = [0.02, 0.0225, 0.025, 0.0275, 0.03, 0.032, 0.035, 0.037]
     maturities, rates = normalize_curve_points(default_plazos, default_rates)
     # maturities es del tipo [0.0833,0.25..], rates es del tipo [0.02,0.025..]
 
-    df_flatcurve = pd.DataFrame({
-        "maturity_years": maturities,
-        "rate_flat_curve": rates,
-    })
+    df_flatcurve = pd.DataFrame({"maturity_years": maturities, "rate_flat_curve": rates,})
+    
     return Curve(df_flatcurve).curves
