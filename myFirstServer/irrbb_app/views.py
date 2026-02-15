@@ -1,6 +1,7 @@
 from django.http import HttpResponse, Http404
 from openpyxl import Workbook
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -33,14 +34,7 @@ class UploadContractsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("dashboard")   
     
     def form_valid(self, form):   #cuando el formulario es válido
-        id_empleado = form.cleaned_data["id_empleado"]
-        
-        try:
-            uploaded_by = CustomUser.objects.get(id=id_empleado)
-        except CustomUser.DoesNotExist:
-            messages.error(self.request, f"No existe un usuario con ID: {id_empleado}")
-            return self.form_invalid(form)
-        
+        uploaded_by = self.request.user
         banco = uploaded_by.bank_name
         if not banco:
             messages.error(self.request, "El usuario no tiene un banco asociado")
@@ -125,6 +119,12 @@ def start(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "irrbb_app/start.html")
+
+
+def LogOutView(request):
+    logout(request)
+    messages.success(request, "Has salido correctamente.")
+    return redirect("start")
 
 def download_template(request):
     wb = Workbook()
