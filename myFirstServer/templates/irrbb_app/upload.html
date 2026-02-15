@@ -6,9 +6,6 @@
     <h2>Subir Excel de contratos</h2>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <label for="id_id_empleado">ID del empleado que sube el balance</label>
-        {{ form.id_empleado }}
-
         <label for="id_excel_file">Archivo</label>
         {{ form.excel_file }}
 

@@ -2,7 +2,7 @@
 {% block title %}Resultados históricos{% endblock %}
 {% block content %}
 <div class="card">
-    <h2>Histórico de cálculos</h2>
+    <h2>Histórico de cálculos del banco {{ request.user.bank_name }}</h2>
     {% if resultados %}
     <div class="table-responsive">
     <table>
