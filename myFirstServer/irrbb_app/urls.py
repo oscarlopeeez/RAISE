@@ -1,12 +1,3 @@
 from django.urls import path
-
 from . import views
-
-urlpatterns = [
-    path("", views.start, name="start"),
-    path("dashboard/", views.home, name="dashboard"),
-    path("upload/", views.upload_contracts, name="upload_contracts"),
-    path("resultados/", views.results_history, name="results_history"),
-    path("resultados/<int:pk>/", views.DetailView.as_view(), name="detail"),
-    path("download_template/", views.download_template, name="download_template"),
-]
+urlpatterns = [path('', views.start, name='start'), path('hoy/', views.today_view, name='dashboard'), path('dashboard/', views.today_view), path('cartera/', views.cartera_view, name='cartera'), path('cartera/contratos/', views.contratos_view, name='contratos'), path('cartera/subir/', views.upload_contracts, name='upload_contracts'), path('upload/', views.upload_contracts), path('calculos/', views.results_history, name='results_history'), path('calculos/pendientes/', views.aprobaciones_view, name='aprobaciones'), path('calculos/<int:pk>/', views.DetailView.as_view(), name='detail'), path('resultados/', views.results_history), path('resultados/<int:pk>/', views.DetailView.as_view()), path('curva/', views.curve_view, name='curve'), path('recalculate/market/', views.recalculate_market, name='recalculate_market'), path('download_template/', views.download_template, name='download_template')]

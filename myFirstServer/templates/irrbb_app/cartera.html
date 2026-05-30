@@ -1,0 +1,250 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Cartera · RAISE{% endblock %}
+{% block content %}
+
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0">Resumen de la cartera {% if banco %}— {{ banco.nombre }}{% endif %}</h2>
+        <div>
+            <a href="{% url 'contratos' %}" class="btn">Ver contratos</a>
+            <a href="{% url 'upload_contracts' %}" class="btn primary">Subir Excel</a>
+        </div>
+    </div>
+    <p class="muted" style="font-family: var(--font-mono); font-size: 11px; margin-top:6px;">{{ n_contratos }} contratos en cartera · resumen ejecutivo</p>
+</div>
+
+{% if portfolio %}
+<div class="card">
+    
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
+        <div class="verdict identity">
+            <div class="verdict-label">Total de contratos</div>
+            <div class="verdict-value">{{ kpis.total_contracts }}</div>
+            <div class="verdict-sub">Activos {{ portfolio.n_activos }} · Pasivos {{ portfolio.n_pasivos }}</div>
+        </div>
+        <div class="verdict">
+            <div class="verdict-label">Activos / Pasivos</div>
+            <div class="verdict-value small">{{ kpis.assets_nominal|floatformat:0|intcomma }} € / {{ kpis.liabilities_nominal|floatformat:0|intcomma }} €</div>
+        </div>
+        <div class="verdict {% if kpis.net_gap >= 0 %}pass{% else %}fail{% endif %}">
+            <div class="verdict-label">Gap neto</div>
+            <div class="verdict-value">{{ kpis.net_gap|floatformat:0|intcomma }} €</div>
+        </div>
+        <!-- Fixed/Floating removed per user request -->
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-top:12px;">
+        <div class="verdict">
+            <div class="verdict-label">Plazo medio activos</div>
+            <div class="verdict-value">{{ kpis.avg_asset_maturity|floatformat:2 }} <span class="muted">años</span></div>
+        </div>
+        <div class="verdict">
+            <div class="verdict-label">Plazo medio pasivos</div>
+            <div class="verdict-value">{{ kpis.avg_liability_maturity|floatformat:2 }} <span class="muted">años</span></div>
+        </div>
+    </div>
+
+    
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        {% for b in badges %}
+        <div style="background:#0e1720; border:1px solid rgba(231,223,200,0.06); padding:6px 10px; border-radius:6px; font-size:12px; color:var(--amber);">{{ b }}</div>
+        {% endfor %}
+    </div>
+
+    
+    <div style="display:grid; grid-template-columns: 2fr 1.15fr; gap:12px; margin-top:14px;">
+        <div>
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:8px;"><h4 style="margin:0">Escalera de plazos</h4></div>
+            <div style="background:var(--surface-2); padding:12px; border-radius:6px;">
+                <div style="position:relative; min-height:220px; height:220px; width:100%;">
+                    <canvas id="buckets-chart" style="display:block; width:100%; height:100%;"></canvas>
+                </div>
+                <table style="width:100%; margin-top:8px; font-size:13px; border-collapse:collapse;">
+                    <thead>
+                        <tr style="color:#9fb3d7; text-align:left; border-bottom:1px solid #233;"><th>Tramo</th><th class="num">Activos</th><th class="num">Pasivos</th><th class="num">Gap neto</th><th class="num">% Gap</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for b in buckets %}
+                        <tr>
+                            <td>{{ b.label }}</td>
+                            <td class="num">{{ b.assets|floatformat:0|intcomma }}</td>
+                            <td class="num">{{ b.liabilities|floatformat:0|intcomma }}</td>
+                            <td class="num {% if b.net_gap >= 0 %}delta-up{% else %}delta-down{% endif %}">{{ b.net_gap|floatformat:0|intcomma }}</td>
+                            <td class="num">{{ b.gap_pct|floatformat:1 }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><h4 style="margin:0">Indicadores clave de riesgo</h4></div>
+            <div style="background:var(--surface-2); padding:12px; border-radius:6px; margin-top:8px;">
+                {% if kris %}
+                    <ul style="margin:0; padding-left:18px;">
+                        {% for k in kris %}
+                        <li>{{ k }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="muted">No se detectan KRIs inmediatos.</div>
+                {% endif %}
+                <div style="margin-top:12px; display:grid; grid-template-columns:1fr; gap:10px;">
+                    <div style="background:#0e1520; border:1px solid rgba(231,223,200,0.06); border-radius:8px; padding:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <h5 style="margin:0">Tipo de interés</h5>
+                            <span style="font-size:11px; color:var(--ink-tertiary);">% nominal</span>
+                        </div>
+                        <div style="position:relative; min-height:220px; height:220px; width:100%; display:flex; align-items:center; justify-content:center;">
+                            <canvas id="mix-donut" style="display:block; width:100%; height:100%;"></canvas>
+                        </div>
+                        <div id="mix-donut-legend" style="text-align:center; margin-top:8px; font-size:12px; color:#fff;"></div>
+                    </div>
+                    <div style="background:#0e1520; border:1px solid rgba(231,223,200,0.06); border-radius:8px; padding:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <h5 style="margin:0">Tipo de amortización</h5>
+                            <span style="font-size:11px; color:var(--ink-tertiary);">% nominal</span>
+                        </div>
+                        <div style="position:relative; min-height:220px; height:220px; width:100%; display:flex; align-items:center; justify-content:center;">
+                            <canvas id="amortization-donut" style="display:block; width:100%; height:100%;"></canvas>
+                        </div>
+                        <div id="amortization-donut-legend" style="text-align:center; margin-top:8px; font-size:12px; color:#fff;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div style="margin-top:14px;">
+        <div class="section-title">Desglose de la cartera</div>
+        <div class="table-responsive">
+                <table>
+            <thead>
+                <tr><th>Producto</th><th class="num">N.</th><th class="num">Nominal Activos</th><th class="num">Nominal Pasivos</th><th class="num">Gap</th></tr>
+            </thead>
+            <tbody>
+                {% for p in portfolio.productos %}
+                <tr>
+                    <td>{{ p.producto }}</td>
+                    <td class="num">{{ p.n_activos|add:p.n_pasivos }}</td>
+                    <td class="num">{{ p.nom_activos|floatformat:0|intcomma }}</td>
+                    <td class="num">{{ p.nom_pasivos|floatformat:0|intcomma }}</td>
+                    <td class="num {% if p.gap >= 0 %}delta-up{% else %}delta-down{% endif %}">{{ p.gap|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    
+
+    {% else %}
+    <div class="card">
+        <h3>Sin datos</h3>
+        <div class="margin-note">
+            <span class="margin-note-label">PRIMER PASO</span>
+            No hay contratos en cartera. Sube un Excel para empezar.
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+    {% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        try {
+            const buckets = {{ chart_buckets|default:'{}'|safe }};
+            if (buckets && document.getElementById('buckets-chart')) {
+                const ctx = document.getElementById('buckets-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: buckets.labels,
+                        datasets: [
+                            { label: 'Activos', data: buckets.assets, backgroundColor: '#58a6ff' },
+                            { label: 'Pasivos', data: buckets.liabilities, backgroundColor: '#3fb950' },
+                        ]
+                    },
+                    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ ticks:{ callback: v => v>=1000 ? (v/1000).toFixed(0)+'k' : v } } } }
+                });
+            }
+
+                    if (window.Chart && document.getElementById('mix-donut')) {
+                const ctx2 = document.getElementById('mix-donut').getContext('2d');
+                const fixed = Number({{ kpis.pct_fixed|default:0 }});
+                const variable = Number({{ kpis.pct_variable|default:0 }});
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels:['Fijo','Variable'],
+                        datasets:[{ data:[fixed, variable], backgroundColor:['#d4a849','#6a8c5c'], borderColor:'#0e1720', borderWidth:2, hoverOffset:4 }]
+                    },
+                    options:{
+                        responsive:true,
+                        maintainAspectRatio:false,
+                        cutout:'68%',
+                        plugins:{
+                            legend:{ display:false },
+                            tooltip:{ callbacks:{ label:(ctx) => `${ctx.label}: ${Number(ctx.parsed).toFixed(1)}%` } }
+                        }
+                    }
+                });
+                // build custom HTML legend for mix-donut
+                try {
+                    const mixLegend = document.getElementById('mix-donut-legend');
+                    if (mixLegend) {
+                        const data = [fixed, variable];
+                        const labels = ['Fijo','Variable'];
+                        const colors = ['#d4a849','#6a8c5c'];
+                        const total = data.reduce((s,v)=>s + (Number(v)||0), 0);
+                        mixLegend.innerHTML = labels.map((lbl,i)=>`<span style="margin:0 8px; display:inline-flex; align-items:center;"><span style="width:10px;height:10px;background:${colors[i]};border-radius:50%;display:inline-block;margin-right:6px;"></span>${lbl} ${total?((Number(data[i])/total*100).toFixed(1)+'%'):'0%'}</span>`).join('');
+                    }
+                } catch(e){console.warn('mix legend build failed', e)}
+            }
+
+                if (window.Chart && document.getElementById('amortization-donut')) {
+                const ctx3 = document.getElementById('amortization-donut').getContext('2d');
+                const amortLabels = [];
+                const amortData = [];
+                const amortColors = [];
+                {% for a in portfolio.amortizacion %}
+                amortLabels.push('{{ a.tipo|escapejs }}');
+                amortData.push(Number({{ a.pct|default:0 }}));
+                amortColors.push({% if forloop.counter0 == 0 %}'#58a6ff'{% elif forloop.counter0 == 1 %}'#d4a849'{% else %}'#3fb950'{% endif %});
+                {% endfor %}
+                    if (amortData.length) {
+                    new Chart(ctx3, {
+                        type: 'doughnut',
+                        data: {
+                            labels: amortLabels,
+                            datasets:[{ data:amortData, backgroundColor:amortColors, borderColor:'#0e1720', borderWidth:2, hoverOffset:4 }]
+                        },
+                        options:{
+                            responsive:true,
+                            maintainAspectRatio:false,
+                            cutout:'68%',
+                            plugins:{
+                                legend:{ display:false },
+                                tooltip:{ callbacks:{ label:(ctx) => `${ctx.label}: ${Number(ctx.parsed).toFixed(1)}%` } }
+                            }
+                        }
+                    });
+                    // build custom HTML legend for amortization-donut
+                    try {
+                        const aLegend = document.getElementById('amortization-donut-legend');
+                        if (aLegend) {
+                            const total = amortData.reduce((s,v)=>s + (Number(v)||0), 0);
+                            aLegend.innerHTML = amortLabels.map((lbl,i)=>`<span style="margin:0 8px; display:inline-flex; align-items:center;"><span style="width:10px;height:10px;background:${amortColors[i]};border-radius:50%;display:inline-block;margin-right:6px;"></span>${lbl} ${total?((Number(amortData[i])/total*100).toFixed(1)+'%'):'0%'}</span>`).join('');
+                        }
+                    } catch(e){console.warn('amort legend build failed', e)}
+                }
+            }
+        } catch(e){ console.warn('charts init failed', e); }
+    });
+    </script>
+    {% endblock %}

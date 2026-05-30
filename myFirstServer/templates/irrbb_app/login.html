@@ -1,16 +1,22 @@
 {% extends "irrbb_app/base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Iniciar sesión{% endblock %}
 {% block content %}
-<div class="card" style="max-width: 420px; margin: 0 auto;">
-    <h2>Acceso</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <label for="id_username">Usuario</label>
-        {{ form.username }}
-        <label for="id_password">Contraseña</label>
-        {{ form.password }}
-        <button type="submit" class="btn" style="margin-top: 16px; width: 100%;">Entrar</button>
-    </form>
+
+<div style="max-width:460px; margin: 18px auto 0;">
+    <div class="card" style="padding:22px;">
+        <h2 style="margin-top:0;">Iniciar sesión</h2>
+        <p class="muted" style="margin-top:0 0 12px 0;">Introduce tus credenciales para acceder al sistema.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label for="id_username">Usuario</label>
+            {{ form.username }}
+            <label for="id_password">Contraseña</label>
+            {{ form.password }}
+            <button type="submit" class="btn primary" style="margin-top: 16px; width: 100%;">Entrar</button>
+        </form>
+        <div style="margin-top:12px; text-align:center; color:var(--ink-secondary);">¿No tienes cuenta? <a href="{% url 'register' %}">Registrarse</a></div>
+    </div>
 </div>
+
 {% endblock %}

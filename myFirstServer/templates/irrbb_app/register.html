@@ -1,43 +1,39 @@
 {% extends "irrbb_app/base.html" %}
 {% block title %}Registro{% endblock %}
 {% block content %}
-<div class="card" style="max-width: 520px; margin: 0 auto;">
-    <h2>Crear cuenta</h2>
-    
-    {% if form.non_field_errors %}
-        <div style="color: red; margin-bottom: 10px;">
-            {{ form.non_field_errors }}
-        </div>
-    {% endif %}
-    
-    <form method="post">
-        {% csrf_token %}
-        
-        {{ form.username.errors }}
-        <label for="id_username">Usuario</label>
-        {{ form.username }}
 
-        {{ form.email.errors }}
-        <label for="id_email">Correo</label>
-        {{ form.email }}
+<div style="max-width:620px; margin: 18px auto 0;">
+    <div class="card" style="padding:22px;">
+        <h2 style="margin-top:0;">Registro</h2>
+        {% if form.non_field_errors %}
+            <div style="color: red; margin-bottom: 10px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.username.errors }}
+            <label for="id_username">Usuario</label>
+            {{ form.username }}
 
-        {{ form.bank_name.errors }}
-        <label for="id_bank_name">Banco</label>
-        {{ form.bank_name }}
+            {{ form.email.errors }}
+            <label for="id_email">Correo</label>
+            {{ form.email }}
 
-        {{ form.password1.errors }}
-        <label for="id_password1">Contraseña</label>
-        {{ form.password1 }}
+            {{ form.bank_name.errors }}
+            <label for="id_bank_name">Banco</label>
+            {{ form.bank_name }}
 
-        {{ form.password2.errors }}
-        <label for="id_password2">Repetir contraseña</label>
-        {{ form.password2 }}
+            {{ form.password1.errors }}
+            <label for="id_password1">Contraseña</label>
+            {{ form.password1 }}
 
-        <button type="submit" class="btn" style="margin-top: 16px; width: 100%;">Registrarse</button>
-    </form>
-    
-    <div style="margin-top: 16px; text-align: center;">
-        <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
+            {{ form.password2.errors }}
+            <label for="id_password2">Repetir contraseña</label>
+            {{ form.password2 }}
+
+            <button type="submit" class="btn primary" style="margin-top: 16px; width: 100%;">Registrarse</button>
+        </form>
+        <div style="margin-top:12px; text-align:center; color:var(--ink-secondary);">¿Ya tienes cuenta? <a href="{% url 'login' %}">Iniciar sesión</a></div>
     </div>
 </div>
+
 {% endblock %}

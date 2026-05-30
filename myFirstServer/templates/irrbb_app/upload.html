@@ -9,6 +9,8 @@
         <label for="id_excel_file">Archivo</label>
         {{ form.excel_file }}
 
+        <!-- 'use_market_curve' checkbox removed: always use latest ECB market curve when available -->
+
         <button type="submit" class="btn" style="margin-top: 16px;">Importar</button>
     </form>
     <p style="margin-top: 10px; font-size: 14px;">Columnas esperadas: NumeroContrato, Producto, ActivoPasivo, Nominal, FechaInicio, FechaVencimiento, TipoInteres, Amortizacion, CuponSpread, Curva, Frecuencia.</p>

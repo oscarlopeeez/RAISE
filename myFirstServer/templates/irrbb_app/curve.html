@@ -1,0 +1,245 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Curva de tipos{% endblock %}
+{% block content %}
+
+
+<div style="display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:16px;">
+    <h2 style="margin:0">Curva de tipos — EUR</h2>
+    <div style="display:flex; gap:12px; align-items:center; font-size:14px; color:#c9d1d9;">
+        <div>Referencia: <strong>{{ compact_market_summary.reference_date|default:"-" }}</strong></div>
+        <div>Estado: <span style="padding:4px 8px; background:#0b1220; border-radius:6px;">{% if compact_market_summary.recommendation == 'REVIEW' %}EN REVISIÓN{% elif compact_market_summary.recommendation == 'NO_DATA' %}SIN DATOS{% elif compact_market_summary.recommendation == 'OUTDATED' %}DESACTUALIZADA{% elif compact_market_summary.recommendation == 'OK' %}ACEPTABLE{% else %}{{ compact_market_summary.recommendation }}{% endif %}</span></div>
+    </div>
+</div>
+
+
+<div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-bottom:16px;">
+    <form method="post" style="margin:0;">
+        {% csrf_token %}
+        <button class="btn" type="submit">Actualizar curva BCE</button>
+    </form>
+</div>
+
+
+<div style="background:#06101a; padding:12px; border-radius:8px; margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-weight:600">Visualización</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <label style="font-size:13px"><input id="toggle-shocks" type="checkbox"> Mostrar shocks</label>
+            <label style="font-size:13px"><input id="toggle-market" type="checkbox" checked> Mostrar curva BCE</label>
+            <!-- Escenario selector removed per user request -->
+        </div>
+    </div>
+    <div style="position: relative; height:360px;">
+        <canvas id="curve-chart" style="width:100%; height:100%;"></canvas>
+    </div>
+</div>
+
+
+<div style="background:#06121a; padding:12px; border-radius:8px; margin-bottom:12px;">
+  <div style="font-weight:600; margin-bottom:8px">Tabla — Todos los escenarios</div>
+  <div style="overflow:auto;">
+    <table style="width:100%; font-size:13px; border-collapse:collapse;">
+      <thead>
+        <tr style="color:#9fb3d7; text-align:left; border-bottom:1px solid #233;">
+          <th style="padding:6px">Tenor</th>
+          <th style="padding:6px">Plazo (años)</th>
+          <th style="padding:6px">Base</th>
+          <th style="padding:6px">Parallel up</th>
+          <th style="padding:6px">Parallel down</th>
+          <th style="padding:6px">Short up</th>
+          <th style="padding:6px">Short down</th>
+          <th style="padding:6px">Steepener</th>
+          <th style="padding:6px">Flattener</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in points %}
+        <tr style="border-bottom:1px solid #0f2833;">
+          <td style="padding:6px">{{ p.maturity_years|floatformat:3 }}Y</td>
+          <td style="padding:6px">{{ p.maturity_years|floatformat:3 }}</td>
+          <td style="padding:6px">{{ p.rate_base_curve|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_parallel_up|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_parallel_down|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_short_up|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_short_down|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_steepener|floatformat:4 }}</td>
+          <td style="padding:6px">{{ p.rate_flattener|floatformat:4 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- Forward rates analysis removed per user request -->
+
+
+<!-- Comparison with ECB curve removed per user request -->
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+console.log('curve page script loaded');
+document.addEventListener('DOMContentLoaded', function(){
+    const payload = {{ chart_json|safe }};
+    const ctx = document.getElementById('curve-chart').getContext('2d');
+    const datasets = payload.datasets.map(ds => Object.assign({}, ds));
+
+    // determine selected scenario label mapping
+    const scenarioMap = {
+        'rate_parallel_up': 'Parallel up',
+        'rate_parallel_down': 'Parallel down',
+        'rate_short_up': 'Short up',
+        'rate_short_down': 'Short down',
+        'rate_steepener': 'Steepener',
+        'rate_flattener': 'Flattener'
+    };
+    const selKey = '{{ selected_scenario }}' || 'rate_parallel_up';
+
+    // helper: find dataset label by matching all tokens from option text (robust against suffixes)
+    function findDatasetLabelForOptionText(optionText) {
+        if (!optionText) return null;
+        const tokens = optionText.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        if (!tokens.length) return null;
+        // score datasets by how many tokens match
+        let best = { label: null, score: 0 };
+        for (const d of datasets) {
+            if (!d.label) continue;
+            const lab = d.label.toLowerCase();
+            let score = 0;
+            for (const t of tokens) if (lab.includes(t)) score++;
+            if (score > best.score) best = { label: d.label, score };
+        }
+        if (best.score > 0) return best.label;
+        return null;
+    }
+
+    const selLabel = findDatasetLabelForOptionText(scenarioMap[selKey]);
+
+    // hide shock datasets by default except selected scenario
+    datasets.forEach(d => {
+        if (d.label && d.label !== 'Curva base' && d.label !== 'Mercado (BCE)') {
+            // default: shocks hidden, only selected scenario visible
+            d.hidden = true;
+        }
+    });
+    // ensure the initially selected scenario dataset is visible
+    if (selLabel) {
+        datasets.forEach(d => { if (d.label === selLabel) d.hidden = false; });
+    }
+
+    // Chart config
+    const config = {
+        type: 'line',
+        data: { datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { boxWidth: 14, boxHeight:8, usePointStyle:true, padding:12, pointStyle:'rectRounded' } },
+                tooltip: { callbacks: { label: function(context){ const raw = context.raw||context.parsed||{}; const y = raw.y!==undefined?raw.y:(context.parsed?context.parsed.y:null); if (y===null) return context.dataset.label; return context.dataset.label + ': ' + (y*100).toFixed(3) + '%'; } } }
+            },
+            scales: { x: { type: 'linear', position:'bottom', min: payload.xMin, max: payload.xMax, title:{display:true, text:'Plazo (años)'} }, y: { title:{display:true, text:'Tipo de interés (%)'}, ticks:{callback: v => (v*100).toFixed(2) + '%'} } }
+        }
+    };
+
+    const chart = new Chart(ctx, config);
+
+    // helper: apply visual style based on selection
+    function styleDatasets(selectedLabel) {
+        chart.data.datasets.forEach(ds => {
+            if (!ds.label) return;
+            if (ds.label === 'Curva base') {
+                ds.borderWidth = 2;
+                ds.pointRadius = 0;
+                ds.borderDash = [];
+            } else if (ds.label === 'Mercado (BCE)') {
+                ds.borderWidth = 1.5;
+                ds.pointRadius = 3;
+                ds.borderDash = [6,4];
+            } else {
+                // shocks
+                if (selectedLabel && ds.label === selectedLabel) {
+                    ds.hidden = false;
+                    ds.borderWidth = 3;
+                    ds.pointRadius = 4;
+                } else {
+                    ds.borderWidth = 1;
+                    ds.pointRadius = 0;
+                    // keep hidden flag as is (controlled elsewhere)
+                }
+                ds.borderDash = [];
+            }
+        });
+    }
+
+    // apply initial toggle states
+    try {
+        const shocksOnInit = document.getElementById('toggle-shocks') ? document.getElementById('toggle-shocks').checked : false;
+        const marketOnInit = document.getElementById('toggle-market') ? document.getElementById('toggle-market').checked : true;
+        // ensure market dataset respects toggle
+        chart.data.datasets.forEach(ds => { if (ds.label === 'Mercado (BCE)') ds.hidden = !marketOnInit; });
+        // ensure shocks visibility: if shocks are off, hide all shock datasets except selected
+        if (!shocksOnInit) {
+            chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = true; });
+        } else {
+            // show only selected
+            const selectedOptionText = scenarioMap[selectScenario.value];
+            const selectedDatasetLabel = findDatasetLabelForOptionText(selectedOptionText);
+            chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = (ds.label !== selectedDatasetLabel); });
+        }
+        // style
+        const initSelectedLabel = findDatasetLabelForOptionText(scenarioMap[selectScenario.value]);
+        styleDatasets(initSelectedLabel);
+        chart.update();
+    } catch (e) { console.warn('init apply failed', e); }
+
+    // toggles
+    const toggleShocks = document.getElementById('toggle-shocks');
+    const toggleMarket = document.getElementById('toggle-market');
+    const selectScenario = document.getElementById('select-scenario');
+
+    toggleShocks.addEventListener('change', () => {
+        const show = toggleShocks.checked;
+        chart.data.datasets.forEach(ds => {
+            if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') {
+                ds.hidden = show ? (ds.label !== (scenarioMap[selectScenario.value] || selLabel)) : true;
+            }
+        });
+        chart.update();
+    });
+
+    toggleMarket.addEventListener('change', () => {
+        chart.data.datasets.forEach(ds => { if (ds.label === 'Mercado (BCE)') ds.hidden = !toggleMarket.checked; });
+        chart.update();
+    });
+
+    selectScenario.addEventListener('change', (e) => {
+        const newKey = e.target.value;
+        const optionText = scenarioMap[newKey];
+        const newLabel = findDatasetLabelForOptionText(optionText);
+        // ensure shocks are visible when user explicitly selects an scenario
+        if (toggleShocks && !toggleShocks.checked) {
+            toggleShocks.checked = true;
+        }
+        // show only the newly selected scenario and keep base/market as appropriate
+        chart.data.datasets.forEach(ds => {
+            if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') {
+                ds.hidden = (ds.label !== newLabel);
+            }
+            if (ds.label === 'Mercado (BCE)') ds.hidden = !(toggleMarket ? toggleMarket.checked : true);
+        });
+        // apply visual style to highlight selected series
+        styleDatasets(newLabel);
+        chart.update();
+    });
+    // expose chart for debugging
+    window.curveChart = chart;
+});
+</script>
+{% endblock %}
+
+{% endblock %}

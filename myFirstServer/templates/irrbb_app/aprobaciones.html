@@ -1,0 +1,110 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Bandeja de aprobaciones · RAISE{% endblock %}
+{% block content %}
+
+<div class="card">
+    <h2>Bandeja de aprobaciones</h2>
+    <p class="muted" style="font-family: var(--font-mono); font-size: 11px;">
+        Cálculos pendientes de la firma del checker. Sólo puedes aprobar lo que NO has subido tú (segregación de funciones).
+    </p>
+    <div class="margin-note">
+        <span class="margin-note-label">CUATRO OJOS</span>
+        En banca regulada, todo cálculo que se reporta al supervisor debe ser <b>verificado por una persona distinta</b> al que lo generó.
+        Es la regla de los "cuatro ojos". Sin doble firma, no se puede descargar el J03.
+    </div>
+</div>
+
+<div class="card">
+    <h3>Esperan tu revisión · {{ para_aprobar|length }}</h3>
+    {% if para_aprobar %}
+    <div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th>Cálculo</th>
+                <th>Curva (ref)</th>
+                <th>Fecha cálculo</th>
+                <th>Autor</th>
+                <th class="num">EVE base</th>
+                <th>SOT EVE</th>
+                <th>SOT NII</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in para_aprobar %}
+            <tr>
+                <td><a href="{% url 'detail' s.obj.pk %}">#{{ s.obj.pk }}</a></td>
+                <td>{% if s.curve_ref %}{{ s.curve_ref }}{% elif s.curve_source.type == 'market' %}{{ s.curve_source.reference_date }}{% else %}-{% endif %}</td>
+                <td>{{ s.fecha_calculo_str|default:"-" }}</td>
+                <td>{{ s.obj.uploaded_by.username|default:"—" }}</td>
+                <td class="num">{{ s.obj.eve_base|floatformat:0|intcomma }}</td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.eve_pass %}<span class="badge pass">APROBADO {{ s.sot.eve_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.nii_pass %}<span class="badge pass">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Revisar</a>
+                    <a href="{% url 'detail' s.obj.pk %}?approve=1" class="btn primary">Aprobar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="muted">Nada que aprobar. Buen trabajo.</p>
+    {% endif %}
+</div>
+
+{% if propios %}
+<div class="card">
+    <h3>Tus pendientes · {{ propios|length }}</h3>
+    <p class="help-inline">Cálculos que has subido y aún no tienen checker. Necesitan que otro usuario los revise.</p>
+    <div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th>Cálculo</th>
+                <th>Curva (ref)</th>
+                <th>Fecha cálculo</th>
+                <th class="num">EVE base</th>
+                <th>SOT EVE</th>
+                <th>SOT NII</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in propios %}
+            <tr>
+                <td><a href="{% url 'detail' s.obj.pk %}">#{{ s.obj.pk }}</a></td>
+                <td>{% if s.curve_ref %}{{ s.curve_ref }}{% elif s.curve_source.type == 'market' %}{{ s.curve_source.reference_date }}{% else %}-{% endif %}</td>
+                <td>{{ s.fecha_calculo_str|default:"-" }}</td>
+                <td class="num">{{ s.obj.eve_base|floatformat:0|intcomma }}</td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.eve_pass %}<span class="badge pass">APROBADO {{ s.sot.eve_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.nii_pass %}<span class="badge pass">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td><a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Ver</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

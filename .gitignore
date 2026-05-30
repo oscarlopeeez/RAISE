@@ -55,3 +55,9 @@ ehthumbs.db
 
 # Node
 node_modules/
+
+# Ignore Python caches and virtualenvs (project-specific)
+__pycache__/
+*.pyc
+.venv/
+myFirstServer/.venv/

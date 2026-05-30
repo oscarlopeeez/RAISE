@@ -1,0 +1,110 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Contratos · RAISE{% endblock %}
+{% block content %}
+
+<div class="card">
+    <h2>Contratos {% if banco %}— {{ banco.nombre }}{% endif %}</h2>
+    <p class="muted" style="font-family: var(--font-mono); font-size: 11px;">
+        Detalle de cada contrato en cartera. Filtra para localizar los relevantes; los más sensibles al EVE aparecen en el <a href="{% url 'results_history' %}">detalle de cálculo · Top 10</a>.
+    </p>
+
+    <form method="get" style="display: grid; grid-template-columns: 1fr 200px 140px 140px auto auto; gap: 8px; align-items: end;">
+        <label style="margin: 0;">
+            <span style="font-size: 10px;">BUSCAR (número de contrato)</span>
+            <input type="text" name="q" value="{{ filters.q }}" placeholder="CONT001..." style="margin-top: 4px;">
+        </label>
+        <label style="margin: 0;">
+            <span style="font-size: 10px;">PRODUCTO</span>
+            <select name="producto" style="margin-top: 4px;">
+                <option value="">— todos —</option>
+                {% for p in productos %}
+                <option value="{{ p }}" {% if filters.producto == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label style="margin: 0;">
+            <span style="font-size: 10px;">A/P</span>
+            <select name="activo_pasivo" style="margin-top: 4px;">
+                <option value="">— todos —</option>
+                <option value="ACTIVO" {% if filters.activo_pasivo == 'ACTIVO' %}selected{% endif %}>ACTIVO</option>
+                <option value="PASIVO" {% if filters.activo_pasivo == 'PASIVO' %}selected{% endif %}>PASIVO</option>
+            </select>
+        </label>
+        <label style="margin: 0;">
+            <span style="font-size: 10px;">TIPO INT.</span>
+            <select name="tipo_interes" style="margin-top: 4px;">
+                <option value="">— todos —</option>
+                <option value="FIJO" {% if filters.tipo_interes == 'FIJO' %}selected{% endif %}>FIJO</option>
+                <option value="VARIABLE" {% if filters.tipo_interes == 'VARIABLE' %}selected{% endif %}>VARIABLE</option>
+            </select>
+        </label>
+        <label style="margin: 0; display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" name="solo_vencidos" value="1" {% if filters.solo_vencidos %}checked{% endif %}>
+            <span style="font-size: 11px; text-transform: none; letter-spacing: 0;">Sólo vencidos</span>
+        </label>
+        <div>
+            <button type="submit" class="btn primary">Filtrar</button>
+            <a href="{% url 'contratos' %}" class="btn secondary">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    {% if contratos %}
+    <p class="muted" style="font-family: var(--font-mono); font-size: 11px;">
+        {{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }} · página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </p>
+    <div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Producto</th>
+                <th>A/P</th>
+                <th class="num">Nominal</th>
+                <th>F. inicio</th>
+                <th>F. vencimiento</th>
+                <th>Tipo</th>
+                <th>Amort.</th>
+                <th class="num">Cupón / Spread</th>
+                <th class="num">Freq.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in contratos %}
+            <tr>
+                <td>{{ c.numero_contrato }}</td>
+                <td>{{ c.producto }}</td>
+                <td><span class="badge {% if c.activo_pasivo == 'ACTIVO' %}amber{% else %}pasivo{% endif %}">{{ c.activo_pasivo }}</span></td>
+                <td class="num">{{ c.nominal|floatformat:0|intcomma }}</td>
+                <td class="num">{{ c.fecha_inicio|date:"Y-m-d" }}</td>
+                <td class="num">{{ c.fecha_vencimiento|date:"Y-m-d" }}</td>
+                <td>{{ c.tipo_interes }}</td>
+                <td>{{ c.tipo_amortizacion }}</td>
+                <td class="num">{{ c.cupon_spread|floatformat:4 }}</td>
+                <td class="num">{{ c.frecuencia_cupon }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    {% if is_paginated %}
+    <p style="margin-top: 12px; font-family: var(--font-mono); font-size: 12px;">
+        {% if page_obj.has_previous %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="btn secondary">← Anterior</a>
+        {% endif %}
+        <span class="muted">página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="btn secondary">Siguiente →</a>
+        {% endif %}
+    </p>
+    {% endif %}
+
+    {% else %}
+    <p class="muted">No hay contratos que coincidan con los filtros.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

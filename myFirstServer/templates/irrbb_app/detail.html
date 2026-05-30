@@ -1,143 +1,156 @@
 {% extends "irrbb_app/base.html" %}
-{% load humanize %}
-{% block title %}Detalle del Balance - {{ resultado.banco.nombre }}{% endblock %}
+{% load humanize static %}
+{% block title %}Cálculo #{{ resultado.pk }} · RAISE{% endblock %}
 {% block content %}
 
-<div class="card">
-    <h2>Banco: {{ resultado.banco.nombre }}</h2>
-    <p><strong>Fecha de cálculo:</strong> {{ resultado.fecha_calculo|date:"d/m/Y H:i" }}</p>
+<div class="breadcrumbs">
+    <a href="{% url 'dashboard' %}">Hoy</a>
+    <span class="sep">/</span>
+    <a href="{% url 'results_history' %}">Cálculos</a>
+    <span class="sep">/</span>
+    <span class="current">#{{ resultado.pk }}</span>
 </div>
 
 <div class="card">
-    <h3>Métricas EVE (Economic Value of Equity)</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Escenario</th>
-                <th>Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Base</td>
-                <td>{{ resultado.eve_base|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Parallel shock up</td>
-                <td>{{ resultado.eve_parallel_up|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Parallel shock down</td>
-                <td>{{ resultado.eve_parallel_down|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Steepener</td>
-                <td>{{ resultado.eve_steepener|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Flattener</td>
-                <td>{{ resultado.eve_flattener|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Short shock up</td>
-                <td>{{ resultado.eve_short_up|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Short shock down</td>
-                <td>{{ resultado.eve_short_down|floatformat:2|intcomma }}</td>
-            </tr>
-        </tbody>
-    </table>
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      {% if bank_logo %}
+        <img src="{% static bank_logo %}" alt="{{ resultado.banco.nombre }}" style="height:42px; width:auto; border-radius:4px; background:#fff; padding:4px;"/>
+      {% endif %}
+      <h1 style="margin:0; font-size:20px;">Cálculo #{{ resultado.pk }} — {{ resultado.banco.nombre }}</h1>
+      <div style="font-family:var(--font-mono); font-size:12px; color:var(--ink-secondary); margin-top:6px;">
+          Fecha curva: {% if curve_source.type == 'market' %}{{ curve_source.reference_date }}{% else %}-{% endif %}
+          Estado: {% if resultado.approved_by %}Aprobado{% else %}Pendiente{% endif %}
+          <!-- Ejecutado: {{ resultado.fecha_calculo|date:"Y-m-d H:i" }} hidden in favor of curve reference -->
+      </div>
+    </div>
+      <!-- single curve reference date shown above near title -->
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <div class="metric" style="text-align:left; padding:10px 14px; border-radius:8px; background:var(--card-bg); min-width:140px;">
+        <div style="font-size:11px; color:var(--ink-secondary);">Nivel 1</div>
+        <div style="font-size:18px; font-weight:700; margin-top:4px;">{% if sot.tier1 %}{{ sot.tier1|floatformat:0|intcomma }} €{% else %}—{% endif %}</div>
+      </div>
+
+      <div class="metric" style="text-align:left; padding:10px 14px; border-radius:8px; background:var(--card-bg); min-width:140px;">
+        <div style="font-size:11px; color:var(--ink-secondary);">Peor EVE</div>
+        <div style="font-size:18px; font-weight:700; margin-top:4px; color:{% if sot.eve_pct and sot.eve_pct >= 15 %}var(--danger){% else %}inherit{% endif %};">{% if sot.eve_pct %}{{ sot.eve_pct|floatformat:2 }}%{% else %}—{% endif %}</div>
+        {% if sot.eve_pct and sot.eve_pct >= 15 %}
+          <div style="margin-top:6px;"><span class="badge fail">≥15% UMBRAL</span></div>
+        {% endif %}
+      </div>
+
+      <div class="metric" style="text-align:left; padding:10px 14px; border-radius:8px; background:var(--card-bg); min-width:140px;">
+        <div style="font-size:11px; color:var(--ink-secondary);">EVE base</div>
+        <div style="font-size:16px; font-weight:700; margin-top:4px;">{{ resultado.eve_base|floatformat:0|intcomma }} €</div>
+      </div>
+
+      <div class="metric" style="text-align:left; padding:10px 14px; border-radius:8px; background:var(--card-bg); min-width:140px;">
+        <div style="font-size:11px; color:var(--ink-secondary);">NII base</div>
+        <div style="font-size:16px; font-weight:700; margin-top:4px;">{{ resultado.nii_base|floatformat:0|intcomma }} €</div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Veredicto regulatorio -->
 <div class="card">
-    <h3>Métricas NII (Net Interest Income)</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Escenario</th>
-                <th>Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Base</td>
-                <td>{{ resultado.nii_base|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Parallel shock up</td>
-                <td>{{ resultado.nii_parallel_up|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Parallel shock down</td>
-                <td>{{ resultado.nii_parallel_down|floatformat:2|intcomma }}</td>
-            </tr>
-        </tbody>
-    </table>
+  <div class="grid cols-2">
+    <div class="verdict {% if sot.eve_pass %}{% if sot.eve_pct >= 10 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}">
+      <div class="verdict-label">SOT EVE</div>
+      <div class="verdict-value">{{ sot.eve_pct|floatformat:2 }}%</div>
+      <div class="verdict-sub">Peor escenario: {{ sot.eve_worst_label }} · Pérdida {{ sot.eve_loss|floatformat:0|intcomma }} €</div>
+    </div>
+    <div class="verdict {% if sot.nii_pass %}{% if sot.nii_pct >= 3 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}">
+      <div class="verdict-label">SOT NII</div>
+      <div class="verdict-value">{{ sot.nii_pct|floatformat:2 }}%</div>
+      <div class="verdict-sub">Peor escenario: {{ sot.nii_worst_label }} · Pérdida {{ sot.nii_loss|floatformat:0|intcomma }} €</div>
+    </div>
+  </div>
 </div>
 
+<!-- KPIs mínimos -->
 <div class="card">
-    <h3>Desglose por tipo de producto</h3>    
-    <h4>Contratos Activos</h4>
-    <table>
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Nominal Total</th>
-                <th>EVE Base</th>
-                <th>NII Base</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if activos %}
-                {% for producto, datos in activos.items %}
-                <tr>
-                    <td>{{ producto }}</td>
-                    <td>{{ datos.count }}</td>
-                    <td>{{ datos.nominal|floatformat:2|intcomma }}</td>
-                    <td>{{ datos.scenario.eve_base|floatformat:2|intcomma }}</td>
-                    <td>{{ datos.scenario.nii_base|floatformat:2|intcomma }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr><td colspan="5">No hay contratos activos</td></tr>
-            {% endif %}
-        </tbody>
-    </table>
-
-    <h4 style="margin-top: 24px;">Contratos Pasivos</h4>
-    <table>
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Nominal Total</th>
-                <th>EVE Base</th>
-                <th>NII Base</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if pasivos %}
-                {% for producto, datos in pasivos.items %}
-                <tr>
-                    <td>{{ producto }}</td>
-                    <td>{{ datos.count }}</td>
-                    <td>{{ datos.nominal|floatformat:2|intcomma }}</td>
-                    <td>{{ datos.scenario.eve_base|floatformat:2|intcomma }}</td>
-                    <td>{{ datos.scenario.nii_base|floatformat:2|intcomma }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr><td colspan="5">No hay contratos pasivos</td></tr>
-            {% endif %}
-        </tbody>
-    </table>
+  <div class="grid cols-2">
+    <div class="kpi">
+      <div class="label">EVE base</div>
+      <div class="value">{{ resultado.eve_base|floatformat:0|intcomma }} €</div>
+    </div>
+    <div class="kpi">
+      <div class="label">NII base</div>
+      <div class="value">{{ resultado.nii_base|floatformat:0|intcomma }} €</div>
+    </div>
+  </div>
 </div>
 
-<div style="margin-top: 20px;">
-    <a href="?download=excel" class="btn primary">Descargar J03</a>
-    <a href="{% url 'results_history' %}" class="btn secondary">← Volver a resultados</a>
+<!-- EVE por escenario -->
+<div class="card">
+  <h3>EVE — por escenario</h3>
+  <table>
+    <thead>
+      <tr><th>Escenario</th><th class="num">Valor</th><th class="num">Δ absoluto</th><th class="num">Δ %</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Base</strong></td><td class="num"><strong>{{ resultado.eve_base|floatformat:2|intcomma }}</strong></td><td class="num muted">—</td><td class="num muted">—</td></tr>
+      {% for r in eve_rows %}
+      <tr>
+        <td>{{ r.label }}</td>
+        <td class="num">{{ r.value|floatformat:2|intcomma }}</td>
+        <td class="num">{{ r.delta|floatformat:2|intcomma }}</td>
+        <td class="num">{{ r.delta_pct|floatformat:3 }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+
+<!-- NII por escenario -->
+<div class="card">
+  <h3>NII — por escenario</h3>
+  <table>
+    <thead>
+      <tr><th>Escenario</th><th class="num">Valor</th><th class="num">Δ absoluto</th><th class="num">Δ %</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Base</strong></td><td class="num"><strong>{{ resultado.nii_base|floatformat:2|intcomma }}</strong></td><td class="num muted">—</td><td class="num muted">—</td></tr>
+      {% for r in nii_rows %}
+      <tr>
+        <td>{{ r.label }}</td>
+        <td class="num">{{ r.value|floatformat:2|intcomma }}</td>
+        <td class="num">{{ r.delta|floatformat:2|intcomma }}</td>
+        <td class="num">{{ r.delta_pct|floatformat:3 }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Top contratos -->
+{% if top_losers %}
+<div class="card">
+  <h3>Top contratos que más contribuyen a la pérdida — {{ top_losers_scenario }}</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Contrato</th><th>Producto</th><th>Tipo</th><th class="num">Nominal</th><th class="num">EVE base</th><th class="num">EVE peor</th><th class="num">Δ EVE</th></tr>
+      </thead>
+      <tbody>
+        {% for c in top_losers %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ c.numero_contrato }}</td>
+          <td>{{ c.producto }}</td>
+          <td>{{ c.activo_pasivo }}</td>
+          <td class="num">{{ c.nominal|floatformat:0|intcomma }}</td>
+          <td class="num">{{ c.eve_base|floatformat:0|intcomma }}</td>
+          <td class="num">{{ c.eve_worst_value|floatformat:0|intcomma }}</td>
+          <td class="num">{{ c.delta|floatformat:0|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}

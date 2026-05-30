@@ -1,0 +1,5 @@
+from django.db import migrations, models
+
+class Migration(migrations.Migration):
+    dependencies = [('irrbb_app', '0005_banco_tier1_capital_resultadobalance_tier1_capital_and_more')]
+    operations = [migrations.CreateModel(name='MarketCurve', fields=[('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')), ('source', models.CharField(default='ECB', max_length=20)), ('fetched_at', models.DateTimeField(auto_now_add=True)), ('reference_date', models.DateField(help_text='Fecha de los datos de la curva')), ('currency', models.CharField(default='EUR', max_length=3)), ('tenors', models.JSONField(default=list))], options={'ordering': ['-reference_date', '-fetched_at']}), migrations.AddConstraint(model_name='contrato', constraint=models.UniqueConstraint(fields=('banco', 'numero_contrato'), name='uniq_banco_numero_contrato')), migrations.AddIndex(model_name='marketcurve', index=models.Index(fields=['source', '-reference_date'], name='irrbb_app_m_source_27e240_idx'))]

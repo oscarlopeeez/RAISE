@@ -1,0 +1,117 @@
+{% extends "irrbb_app/base.html" %}
+{% load humanize %}
+{% block title %}Hoy · RAISE{% endblock %}
+{% block content %}
+
+{% if not banco %}
+<div class="card">
+    <h2>Tu usuario no tiene banco asociado</h2>
+    <p class="muted">Pide al admin que te asigne uno desde el <a href="/admin/users/customuser/">panel de admin</a>.</p>
+</div>
+{% else %}
+
+{% if not latest %}
+<div class="card">
+    <h2>Aún no hay cálculos</h2>
+    <div class="margin-note">
+        <span class="margin-note-label">PRIMER PASO</span>
+        Sube un Excel de contratos desde <a href="{% url 'cartera' %}">Cartera</a> para generar tu primer cálculo IRRBB.
+    </div>
+</div>
+{% else %}
+
+<div class="card">
+    <h2>Hoy</h2>
+    <p class="muted" style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;">
+        Cálculo: {% if latest %}<a href="{% url 'detail' latest.obj.pk %}">#{{ latest.obj.pk }}</a>{% else %}-{% endif %} · Última curva: {% if latest and latest.curve_source.type == 'market' %}{{ latest.curve_source.reference_date }}{% else %}-{% endif %}
+    </p>
+
+    
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-top:12px;">
+        <div style="flex:1;">
+            {% if not latest or latest.sot.missing_tier1 %}
+                <div class="verdict neutral">
+                    <div class="verdict-label">Estado SOT</div>
+                    <div class="verdict-value">No disponible</div>
+                    <div class="verdict-sub">Tier 1 no configurado</div>
+                </div>
+            {% else %}
+                {% if latest.sot.ok %}
+                    <div class="verdict pass">
+                        <div class="verdict-label">SOT APROBADO</div>
+                        <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
+                        <div class="verdict-sub">EVE y NII dentro de los umbrales regulatorios.</div>
+                    </div>
+                {% elif latest.sot.eve_pass or latest.sot.nii_pass %}
+                    <div class="verdict warn">
+                        <div class="verdict-label">SOT EN VIGILANCIA</div>
+                        <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
+                        <div class="verdict-sub">Una métrica cercana al umbral regulatorio.</div>
+                    </div>
+                {% else %}
+                    <div class="verdict fail">
+                        <div class="verdict-label">SOT RECHAZADO</div>
+                        <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
+                        <div class="verdict-sub">Se detectó un incumplimiento regulatorio.</div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div style="width:360px;">
+            
+            {% if latest and not latest.sot.missing_tier1 %}
+            <div style="margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-secondary);"> <span>SOT EVE</span><span>{{ latest.sot.eve_pct|floatformat:1 }}% del Tier 1 (umbral {{ latest.sot.eve_threshold_pct|floatformat:0 }}%)</span></div>
+                <div class="threshold-bar" style="height:10px; border-radius:6px; background:var(--inset); overflow:hidden; margin-top:6px;">
+                    {% widthratio latest.sot.eve_pct latest.sot.eve_threshold_pct 100 as ev_w %}
+                    <div class="fill {% if latest.sot.eve_pass %}{% if latest.sot.eve_pct >= 10 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}" style="width: {{ ev_w }}%; height:100%;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-secondary);"> <span>SOT NII</span><span>{{ latest.sot.nii_pct|floatformat:1 }}% del Tier 1 (umbral {{ latest.sot.nii_threshold_pct|floatformat:0 }}%)</span></div>
+                <div class="threshold-bar" style="height:10px; border-radius:6px; background:var(--inset); overflow:hidden; margin-top:6px;">
+                    {% widthratio latest.sot.nii_pct latest.sot.nii_threshold_pct 100 as ni_w %}
+                    <div class="fill {% if latest.sot.nii_pass %}{% if latest.sot.nii_pct >= 3 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}" style="width: {{ ni_w }}%; height:100%;"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-top:14px;">
+        <div class="verdict">
+            <div class="verdict-label">EVE base</div>
+            <div class="verdict-value">{% if latest %}{{ latest.obj.eve_base|floatformat:0|intcomma }}{% else %}—{% endif %}</div>
+        </div>
+        <div class="verdict">
+            <div class="verdict-label">Duración modificada</div>
+            <div class="verdict-value">{% if latest %}{{ latest.sens.mod_duration|floatformat:2 }} <span class="muted">años</span>{% else %}—{% endif %}</div>
+        </div>
+        <div class="verdict">
+            <div class="verdict-label">NII base</div>
+            <div class="verdict-value">{% if latest %}{{ latest.obj.nii_base|floatformat:0|intcomma }}{% else %}—{% endif %}</div>
+        </div>
+    </div>
+
+    <div style="display:flex; gap:12px; align-items:center; margin-top:14px;">
+        <div style="flex:1;">
+            <div class="section-title">Factor de riesgo principal</div>
+            <div style="background:var(--surface-2); padding:10px; border-radius:6px; color:var(--ink-primary);">{{ main_risk_driver }}</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <a href="{% url 'detail' latest.obj.pk %}" class="btn primary">Ver cálculo</a>
+            <a href="{% url 'cartera' %}" class="btn">Ver cartera</a>
+            <a href="{% url 'curve' %}" class="btn">Ver curva</a>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+{% endif %}
+{% endif %}
+
+{% endblock %}

@@ -1,12 +1,16 @@
 {% extends "irrbb_app/base.html" %}
+{% load static %}
 {% block title %}Panel IRRBB{% endblock %}
 {% block content %}
-<div class = inicio>
-    <h1>Bienvenido al sistema de gestión IRRBB</h1>
-    <p>Antes de comenzar es necesario que se registre o inicie sesión.</p>
-    <div class="botones-inicio">
-        <a href="{% url 'login' %}" class="btn">Iniciar sesión</a>
-        <a href="{% url 'register' %}" class="btn">Registrarse</a>
+<div style="background: linear-gradient(120deg, rgba(7,18,38,0.85) 0%, rgba(18,51,72,0.85) 60%), url('{% static "irrbb_app/images/hero.svg" %}'); background-size:cover; background-position:center; padding:60px 20px; border-radius:10px; text-align:center; color:var(--ink-primary);">
+    <div style="max-width:1100px; margin:0 auto;">
+        <div style="font-family: var(--font-mono); color:var(--amber); letter-spacing:0.18em; font-weight:700;">RAISE</div>
+        <h1 style="font-size:44px; margin:8px 0 10px;">Bienvenido al sistema de gestión IRRBB</h1>
+        <p style="font-size:18px; color:var(--ink-secondary); max-width:820px; margin:0 auto 18px;">Gestiona cálculos regulatorios, escenarios y KPIs desde un único panel.</p>
+        <div style="display:flex; gap:12px; justify-content:center; margin-top:14px;">
+            <a href="{% url 'login' %}" class="btn primary" style="padding:12px 20px; font-size:16px;">Iniciar sesión</a>
+            <a href="{% url 'register' %}" class="btn" style="padding:12px 20px; font-size:16px;">Registrarse</a>
+        </div>
     </div>
 </div>
 {% endblock %}

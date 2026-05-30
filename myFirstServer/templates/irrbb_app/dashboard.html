@@ -1,55 +1,210 @@
 {% extends "irrbb_app/base.html" %}
+{% load humanize %}
 {% block title %}Panel IRRBB{% endblock %}
 {% block content %}
+
 <div class="card">
-    <h2>Resumen rápido</h2>
-    <p><strong>Balances:</strong> {{ banks_count|add:"-1" }} | <strong>Contratos:</strong> {{ contracts_count }}</p>
-    <p>Accede a <a href="{% url 'upload_contracts' %}">Subir Excel</a> para cargar nuevos contratos y recalcular métricas.</p>
+    <h2>Panel {% if banco %}— {{ banco.nombre }}{% endif %}</h2>
+    {% if not banco %}
+        <p class="muted">Tu usuario no tiene banco asociado. Pide al admin que te asigne uno.</p>
+    {% endif %}
+    <p>
+        <a href="{% url 'upload_contracts' %}" class="btn">Subir Excel</a>
+        <a href="{% url 'recalculate_market' %}" class="btn secondary">↻ Recalcular con curva BCE</a>
+        <a href="{% url 'results_history' %}" class="btn secondary">Histórico de cálculos</a>
+        <a href="{% url 'download_template' %}" class="btn secondary">Descargar plantilla</a>
+    </p>
 </div>
+
+{% if portfolio %}
+<div class="card">
+    <h3>Composición de la cartera</h3>
+    <div class="margin-note">
+        <span class="margin-note-label">RADIOGRAFÍA</span>
+        Foto rápida de los contratos del banco. Cuanto más equilibrada (activos ~ pasivos, mix fijo/variable parecido, plazos similares), <span class="good">menos riesgo de tipo</span>. Cuanto más descalce (activos largos a fijo + pasivos cortos a variable), <span class="bad">más sensibilidad a movimientos de tipos</span>.
+    </div>
+    <div class="grid cols-4">
+        <div class="kpi">
+            <div class="label">Tier 1 capital</div>
+            <div class="value">{{ banco.tier1_capital|floatformat:0|intcomma }} €</div>
+            <div class="sub">{% if banco.tier1_capital %}base del SOT (test del supervisor){% else %}<span style="color: #f85149;">⚠ sin configurar</span>{% endif %}</div>
+            <div class="help-inline">El capital de mejor calidad del banco. Es el <b>denominador</b> contra el que se mide si las pérdidas IRRBB son aceptables o no.</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Contratos</div>
+            <div class="value">{{ portfolio.n_contratos }}</div>
+            <div class="sub">{{ portfolio.n_activos }} activos · {{ portfolio.n_pasivos }} pasivos</div>
+            <div class="help-inline">Activos = préstamos, bonos comprados… Pasivos = depósitos, deuda emitida. El banco intermedia entre los dos.</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Nominal A / P</div>
+            <div class="value" style="font-size: 14px;">
+                {{ portfolio.nominal_activos|floatformat:0|intcomma }} / {{ portfolio.nominal_pasivos|floatformat:0|intcomma }}
+            </div>
+            <div class="help-inline">Sumas de importes (€). En un banco normal A > P (la diferencia es el patrimonio).</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Gap</div>
+            <div class="value {% if portfolio.gap >= 0 %}delta-up{% else %}delta-down{% endif %}">
+                {{ portfolio.gap|floatformat:0|intcomma }} €
+            </div>
+            <div class="sub">capital económico implícito</div>
+            <div class="help-inline">Lo que en teoría "queda" si liquidaras todo. <span class="good">Positivo es normal y deseable</span>; <span class="bad">negativo significa que debes más de lo que tienes</span>.</div>
+        </div>
+    </div>
+
+    <div class="grid cols-3" style="margin-top: 12px;">
+        <div class="kpi">
+            <div class="label">Mix tipo de interés</div>
+            <div class="value" style="font-size: 16px;">
+                {{ portfolio.pct_fijo|floatformat:1 }}% fijo · {{ portfolio.pct_variable|floatformat:1 }}% variable
+            </div>
+            <div class="bar"><span class="green" style="width: {{ portfolio.pct_fijo|floatformat:0 }}%"></span></div>
+            <div class="help-inline"><b>Fijo</b> = cupón pactado, no cambia (sensible al EVE). <b>Variable</b> = se repreciá con la curva (sensible al NII a corto). Banca comercial sana ronda 40-60% en cada uno.</div>
+            <div class="help-inline" style="margin-top:6px;">En los tramos de largo plazo los activos superan a los pasivos. <strong>Fijo {{ portfolio.pct_fijo|floatformat:1 }}% · Variable {{ portfolio.pct_variable|floatformat:1 }}%</strong></div>
+        </div>
+        <div class="kpi">
+            <div class="label">Plazo medio activos</div>
+            <div class="value">{{ portfolio.plazo_medio_activos|floatformat:2 }} <span class="muted" style="font-size: 14px;">años</span></div>
+            <div class="help-inline">Tiempo medio hasta el vencimiento de tus activos (ponderado por nominal). Hipotecas: 15-25y. Préstamos corporativos: 3-7y.</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Plazo medio pasivos</div>
+            <div class="value">{{ portfolio.plazo_medio_pasivos|floatformat:2 }} <span class="muted" style="font-size: 14px;">años</span></div>
+            <div class="help-inline">Idem para pasivos. Si <b>activos &gt;&gt; pasivos</b> en plazo, tienes <span class="bad">descalce de duración</span>: ganas margen pero pierdes EVE si suben los tipos. Diferencia ideal: pequeña.</div>
+        </div>
+    </div>
+
+    <div class="section-title">Desglose por producto</div>
+    <p class="help-inline">Cuántos contratos y nominal hay de cada tipo de instrumento. El <b>Gap</b> es Activos − Pasivos del mismo producto: muestra dónde el banco está "largo" (activo &gt; pasivo) o "corto" (pasivo &gt; activo).</p>
+    <div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th class="num">N. activos</th>
+                <th class="num">Nominal activos</th>
+                <th class="num">N. pasivos</th>
+                <th class="num">Nominal pasivos</th>
+                <th class="num">Gap</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in portfolio.productos %}
+            <tr>
+                <td>{{ p.producto }}</td>
+                <td class="num">{{ p.n_activos }}</td>
+                <td class="num">{{ p.nom_activos|floatformat:0|intcomma }}</td>
+                <td class="num">{{ p.n_pasivos }}</td>
+                <td class="num">{{ p.nom_pasivos|floatformat:0|intcomma }}</td>
+                <td class="num {% if p.gap >= 0 %}delta-up{% else %}delta-down{% endif %}">{{ p.gap|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <div class="grid cols-2" style="margin-top: 12px;">
+        <div>
+            <div class="section-title">Por amortización</div>
+            <p class="help-inline"><b>Francesa</b> = cuota mensual fija (la típica hipoteca). <b>Alemana</b> = amortización fija (capital constante, intereses decrecientes). <b>Bullet</b> = todo el principal al vencimiento (bonos).</p>
+            <table>
+                <thead><tr><th>Tipo</th><th class="num">Nominal</th><th class="num">%</th></tr></thead>
+                <tbody>
+                    {% for a in portfolio.amortizacion %}
+                    <tr>
+                        <td>{{ a.tipo }}</td>
+                        <td class="num">{{ a.nominal|floatformat:0|intcomma }}</td>
+                        <td class="num">{{ a.pct|floatformat:1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div class="section-title">Por frecuencia de cupón</div>
+            <p class="help-inline">Cuántas veces al año se cobra/paga el cupón. 1=anual, 2=semestral, 4=trimestral, 12=mensual. Más alta = se repreciá más rápido (importante para NII).</p>
+            <table>
+                <thead><tr><th>Frecuencia / año</th><th class="num">Contratos</th></tr></thead>
+                <tbody>
+                    {% for f in portfolio.frecuencia %}
+                    <tr>
+                        <td>{{ f.freq }}</td>
+                        <td class="num">{{ f.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
 
 <div class="card">
     <h3>Últimos cálculos</h3>
+    <div class="margin-note">
+        <span class="margin-note-label">Registro de auditoría</span>
+        Cada fila es una <b>instantánea</b> (cálculo guardado con su curva y contratos).
+        La columna <b>SOT</b> es el veredicto del supervisor: <span class="good">APROBADO</span> = dentro del umbral; <span class="bad">RECHAZADO</span> = outlier, banco en lista corta del regulador.
+        Umbrales EBA: EVE ≤ 15% Tier 1, NII ≤ 5% Tier 1.
+    </div>
     {% if latest_results %}
     <div class="table-responsive">
     <table>
         <thead>
             <tr>
-                <th>ID_empleado</th>
+                <th>Cálculo</th>
+                <th>Curva (ref)</th>
                 <th>Fecha cálculo</th>
-                <th>EVE base</th>
-                <th>EVE parallel shock up</th>
-                <th>EVE parallel shock down</th>
-                <th>EVE steepener</th>
-                <th>EVE flattener</th>
-                <th>EVE short shock up</th>
-                <th>EVE short shock down</th>
-                <th>NII base</th>
-                <th>NII parallel shock up</th>
-                <th>NII parallel shock down</th>
+                <th>Usuario</th>
+                <th>Curva</th>
+                <th class="num">EVE base</th>
+                <th class="num">Δ EVE peor</th>
+                <th>SOT EVE</th>
+                <th class="num">NII base</th>
+                <th class="num">Δ NII peor</th>
+                <th>SOT NII</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            {% for r in latest_results %}
+            {% for s in latest_results %}
             <tr>
-                <td>{{ r.uploaded_by.id }}</td>
-                <td>{{ r.fecha_calculo|date:"Y-m-d H:i" }}</td>
-                <td>{{ r.eve_base|floatformat:2 }}</td>
-                <td>{{ r.eve_parallel_up|floatformat:2 }}</td>
-                <td>{{ r.eve_parallel_down|floatformat:2 }}</td>
-                <td>{{ r.eve_steepener|floatformat:2 }}</td>
-                <td>{{ r.eve_flattener|floatformat:2 }}</td>
-                <td>{{ r.eve_short_up|floatformat:2 }}</td>
-                <td>{{ r.eve_short_down|floatformat:2 }}</td>
-                <td>{{ r.nii_base|floatformat:2 }}</td>
-                <td>{{ r.nii_parallel_up|floatformat:2 }}</td>
-                <td>{{ r.nii_parallel_down|floatformat:2 }}</td>
+                <td><a href="{% url 'detail' s.obj.pk %}">#{{ s.obj.pk }}</a></td>
+                <td>{% if s.curve_ref %}{{ s.curve_ref }}{% elif s.curve_source.type == 'market' %}{{ s.curve_source.reference_date }}{% else %}-{% endif %}</td>
+                <td>{{ s.fecha_calculo_str|default:"-" }}</td>
+                <td>{{ s.obj.uploaded_by.username|default:"—" }}</td>
+                <td>{% if s.curve_source.type == 'market' %}{{ s.curve_source.reference_date }}{% else %}-{% endif %}</td>
+                <td class="num">{{ s.obj.eve_base|floatformat:0|intcomma }}</td>
+                <td class="num delta-{{ s.eve_worst.sign|default:'zero' }}">
+                    {{ s.eve_worst.delta|floatformat:0|intcomma }}
+                    <span class="muted">({{ s.eve_worst.label }})</span>
+                </td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.eve_pass %}<span class="badge activo">APROBADO {{ s.sot.eve_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge pasivo">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td class="num">{{ s.obj.nii_base|floatformat:0|intcomma }}</td>
+                <td class="num delta-{{ s.nii_worst.sign|default:'zero' }}">
+                    {{ s.nii_worst.delta|floatformat:0|intcomma }}
+                    <span class="muted">({{ s.nii_worst.label }})</span>
+                </td>
+                <td>
+                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
+                    {% elif s.sot.nii_pass %}<span class="badge activo">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
+                    {% else %}<span class="badge pasivo">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
+                </td>
+                <td><a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Detalle</a></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     </div>
     {% else %}
-        <p>No hay cálculos registrados todavía.</p>
+        <p class="muted">No hay cálculos registrados todavía. Sube un Excel desde <a href="{% url 'upload_contracts' %}">Subir Excel</a>.</p>
     {% endif %}
 </div>
 {% endblock %}
