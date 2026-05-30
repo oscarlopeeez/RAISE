@@ -21,10 +21,10 @@
       <div style="font-family:var(--font-mono); font-size:12px; color:var(--ink-secondary); margin-top:6px;">
           Fecha curva: {% if curve_source.type == 'market' %}{{ curve_source.reference_date }}{% else %}-{% endif %}
           Estado: {% if resultado.approved_by %}Aprobado{% else %}Pendiente{% endif %}
-          <!-- Ejecutado: {{ resultado.fecha_calculo|date:"Y-m-d H:i" }} hidden in favor of curve reference -->
+          
       </div>
     </div>
-      <!-- single curve reference date shown above near title -->
+      
 
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <div class="metric" style="text-align:left; padding:10px 14px; border-radius:8px; background:var(--card-bg); min-width:140px;">
@@ -53,7 +53,6 @@
   </div>
 </div>
 
-<!-- Veredicto regulatorio -->
 <div class="card">
   <div class="grid cols-2">
     <div class="verdict {% if sot.eve_pass %}{% if sot.eve_pct >= 10 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}">
@@ -69,7 +68,6 @@
   </div>
 </div>
 
-<!-- KPIs mínimos -->
 <div class="card">
   <div class="grid cols-2">
     <div class="kpi">
@@ -83,7 +81,6 @@
   </div>
 </div>
 
-<!-- EVE por escenario -->
 <div class="card">
   <h3>EVE — por escenario</h3>
   <table>
@@ -104,7 +101,6 @@
   </table>
 </div>
 
-<!-- NII por escenario -->
 <div class="card">
   <h3>NII — por escenario</h3>
   <table>
@@ -125,7 +121,6 @@
   </table>
 </div>
 
-<!-- Top contratos -->
 {% if top_losers %}
 <div class="card">
   <h3>Top contratos que más contribuyen a la pérdida — {{ top_losers_scenario }}</h3>

@@ -145,13 +145,11 @@ def compute_contract_contributions(banco, curve_df, valuation_date):
             for key, col in EVE_SCENARIO_COLS.items():
                 disc = discount_cashflows(cf, curve_df, col)
                 row[key] = float(disc['pv'].sum())
-        # also compute NII contributions for the 1-year horizon
         try:
             nii_res = calculate_nii(cf, curve_df)
             for k, v in nii_res.items():
                 row[k] = float(v)
         except Exception:
-            # ensure keys exist even on failure
             row['nii_base'] = row.get('nii_base', 0.0)
             row['nii_parallel_up'] = row.get('nii_parallel_up', 0.0)
             row['nii_parallel_down'] = row.get('nii_parallel_down', 0.0)
@@ -170,7 +168,6 @@ def run_balance_pricing(banco: Banco, uploaded_by=None, valuation_date=None, mar
     contratos = list(banco.contratos.all())
     if not contratos:
         return None
-    # Siempre usar la última curva de mercado (BCE). Si no se proporciona, intentar obtener la primera guardada.
     if market_curve is None:
         from ..models import MarketCurve
         market_curve = MarketCurve.objects.first()

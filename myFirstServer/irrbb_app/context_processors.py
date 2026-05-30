@@ -20,7 +20,6 @@ def irrbb_context(request):
     bank_logo = None
     try:
         if banco:
-            # prefer png, fallback to jpg if present in static folder
             from pathlib import Path
             from django.conf import settings
             static_dir = Path(settings.BASE_DIR) / 'static' / 'irrbb_app' / 'logos' / 'banks'

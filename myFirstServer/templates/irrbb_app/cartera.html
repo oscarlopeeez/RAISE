@@ -31,7 +31,7 @@
             <div class="verdict-label">Gap neto</div>
             <div class="verdict-value">{{ kpis.net_gap|floatformat:0|intcomma }} €</div>
         </div>
-        <!-- Fixed/Floating removed per user request -->
+        
     </div>
 
     <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-top:12px;">
@@ -154,7 +154,7 @@
 {% endblock %}
 
     {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https:
     <script>
     document.addEventListener('DOMContentLoaded', function(){
         try {
@@ -194,7 +194,7 @@
                         }
                     }
                 });
-                // build custom HTML legend for mix-donut
+                
                 try {
                     const mixLegend = document.getElementById('mix-donut-legend');
                     if (mixLegend) {
@@ -234,7 +234,7 @@
                             }
                         }
                     });
-                    // build custom HTML legend for amortization-donut
+                    
                     try {
                         const aLegend = document.getElementById('amortization-donut-legend');
                         if (aLegend) {

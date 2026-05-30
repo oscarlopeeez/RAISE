@@ -3,7 +3,6 @@
 {% block title %}Curva de tipos{% endblock %}
 {% block content %}
 
-
 <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:16px;">
     <h2 style="margin:0">Curva de tipos — EUR</h2>
     <div style="display:flex; gap:12px; align-items:center; font-size:14px; color:#c9d1d9;">
@@ -12,7 +11,6 @@
     </div>
 </div>
 
-
 <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-bottom:16px;">
     <form method="post" style="margin:0;">
         {% csrf_token %}
@@ -20,21 +18,19 @@
     </form>
 </div>
 
-
 <div style="background:#06101a; padding:12px; border-radius:8px; margin-bottom:12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <div style="font-weight:600">Visualización</div>
         <div style="display:flex; gap:8px; align-items:center;">
             <label style="font-size:13px"><input id="toggle-shocks" type="checkbox"> Mostrar shocks</label>
             <label style="font-size:13px"><input id="toggle-market" type="checkbox" checked> Mostrar curva BCE</label>
-            <!-- Escenario selector removed per user request -->
+            
         </div>
     </div>
     <div style="position: relative; height:360px;">
         <canvas id="curve-chart" style="width:100%; height:100%;"></canvas>
     </div>
 </div>
-
 
 <div style="background:#06121a; padding:12px; border-radius:8px; margin-bottom:12px;">
   <div style="font-weight:600; margin-bottom:8px">Tabla — Todos los escenarios</div>
@@ -72,14 +68,8 @@
   </div>
 </div>
 
-
-<!-- Forward rates analysis removed per user request -->
-
-
-<!-- Comparison with ECB curve removed per user request -->
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https:
 <script>
 console.log('curve page script loaded');
 document.addEventListener('DOMContentLoaded', function(){
@@ -87,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const ctx = document.getElementById('curve-chart').getContext('2d');
     const datasets = payload.datasets.map(ds => Object.assign({}, ds));
 
-    // determine selected scenario label mapping
+    
     const scenarioMap = {
         'rate_parallel_up': 'Parallel up',
         'rate_parallel_down': 'Parallel down',
@@ -98,12 +88,12 @@ document.addEventListener('DOMContentLoaded', function(){
     };
     const selKey = '{{ selected_scenario }}' || 'rate_parallel_up';
 
-    // helper: find dataset label by matching all tokens from option text (robust against suffixes)
+    
     function findDatasetLabelForOptionText(optionText) {
         if (!optionText) return null;
         const tokens = optionText.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
         if (!tokens.length) return null;
-        // score datasets by how many tokens match
+        
         let best = { label: null, score: 0 };
         for (const d of datasets) {
             if (!d.label) continue;
@@ -118,19 +108,19 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const selLabel = findDatasetLabelForOptionText(scenarioMap[selKey]);
 
-    // hide shock datasets by default except selected scenario
+    
     datasets.forEach(d => {
         if (d.label && d.label !== 'Curva base' && d.label !== 'Mercado (BCE)') {
-            // default: shocks hidden, only selected scenario visible
+            
             d.hidden = true;
         }
     });
-    // ensure the initially selected scenario dataset is visible
+    
     if (selLabel) {
         datasets.forEach(d => { if (d.label === selLabel) d.hidden = false; });
     }
 
-    // Chart config
+    
     const config = {
         type: 'line',
         data: { datasets: datasets },
@@ -148,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const chart = new Chart(ctx, config);
 
-    // helper: apply visual style based on selection
+    
     function styleDatasets(selectedLabel) {
         chart.data.datasets.forEach(ds => {
             if (!ds.label) return;
@@ -161,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 ds.pointRadius = 3;
                 ds.borderDash = [6,4];
             } else {
-                // shocks
+                
                 if (selectedLabel && ds.label === selectedLabel) {
                     ds.hidden = false;
                     ds.borderWidth = 3;
@@ -169,35 +159,35 @@ document.addEventListener('DOMContentLoaded', function(){
                 } else {
                     ds.borderWidth = 1;
                     ds.pointRadius = 0;
-                    // keep hidden flag as is (controlled elsewhere)
+                    
                 }
                 ds.borderDash = [];
             }
         });
     }
 
-    // apply initial toggle states
+    
     try {
         const shocksOnInit = document.getElementById('toggle-shocks') ? document.getElementById('toggle-shocks').checked : false;
         const marketOnInit = document.getElementById('toggle-market') ? document.getElementById('toggle-market').checked : true;
-        // ensure market dataset respects toggle
+        
         chart.data.datasets.forEach(ds => { if (ds.label === 'Mercado (BCE)') ds.hidden = !marketOnInit; });
-        // ensure shocks visibility: if shocks are off, hide all shock datasets except selected
+        
         if (!shocksOnInit) {
             chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = true; });
         } else {
-            // show only selected
+            
             const selectedOptionText = scenarioMap[selectScenario.value];
             const selectedDatasetLabel = findDatasetLabelForOptionText(selectedOptionText);
             chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = (ds.label !== selectedDatasetLabel); });
         }
-        // style
+        
         const initSelectedLabel = findDatasetLabelForOptionText(scenarioMap[selectScenario.value]);
         styleDatasets(initSelectedLabel);
         chart.update();
     } catch (e) { console.warn('init apply failed', e); }
 
-    // toggles
+    
     const toggleShocks = document.getElementById('toggle-shocks');
     const toggleMarket = document.getElementById('toggle-market');
     const selectScenario = document.getElementById('select-scenario');
@@ -221,22 +211,22 @@ document.addEventListener('DOMContentLoaded', function(){
         const newKey = e.target.value;
         const optionText = scenarioMap[newKey];
         const newLabel = findDatasetLabelForOptionText(optionText);
-        // ensure shocks are visible when user explicitly selects an scenario
+        
         if (toggleShocks && !toggleShocks.checked) {
             toggleShocks.checked = true;
         }
-        // show only the newly selected scenario and keep base/market as appropriate
+        
         chart.data.datasets.forEach(ds => {
             if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') {
                 ds.hidden = (ds.label !== newLabel);
             }
             if (ds.label === 'Mercado (BCE)') ds.hidden = !(toggleMarket ? toggleMarket.checked : true);
         });
-        // apply visual style to highlight selected series
+        
         styleDatasets(newLabel);
         chart.update();
     });
-    // expose chart for debugging
+    
     window.curveChart = chart;
 });
 </script>

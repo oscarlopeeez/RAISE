@@ -5,41 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}RAISE{% endblock %}</title>
     {% load static %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https:
+    <link rel="preconnect" href="https:
+    <link href="https:
     <style>
-        /* ─── Defensible night · design tokens ─────────────────────────────── */
+        
         :root {
-            /* Surfaces — prussian charcoal stack, ~4% lightness steps */
+            
             --canvas:        #0c1320;
             --surface-1:     #101824;
             --surface-2:     #131c2a;
             --inset:         #080d16;
 
-            /* Ink hierarchy — cream paper */
+            
             --ink-primary:   #e7dfc8;
             --ink-secondary: #b8b29c;
-            --ink-tertiary:  #b8b29c; /* equalizar a --ink-secondary para mayor legibilidad */
-            --ink-muted:     #b8b29c; /* equalizar a --ink-secondary para mayor legibilidad */
+            --ink-tertiary:  #b8b29c; 
+            --ink-muted:     #b8b29c; 
 
-            /* Borders — rule-on-ledger weights */
+            
             --border-subtle:    rgba(231, 223, 200, 0.05);
             --border-default:   rgba(231, 223, 200, 0.10);
             --border-emphasis:  rgba(231, 223, 200, 0.18);
             --border-focus:     rgba(212, 168, 73, 0.65);
 
-            /* Identity */
+            
             --amber:         #d4a849;
             --amber-bg:      rgba(212, 168, 73, 0.12);
             --amber-bg-soft: rgba(212, 168, 73, 0.06);
 
-            /* Semantic — banking's own muted palette */
+            
             --ledger-green:    #6a8c5c;
             --ledger-green-bg: rgba(106, 140, 92, 0.12);
             --crimson:         #b04848;
             --crimson-bg:      rgba(176, 72, 72, 0.12);
-            --ochre:           #c08850;  /* watch zone */
+            --ochre:           #c08850;  
             --ochre-bg:        rgba(192, 136, 80, 0.10);
 
             --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
@@ -62,7 +62,7 @@
             text-rendering: optimizeLegibility;
         }
 
-        /* ─── Context strip (signature element) ────────────────────────────── */
+        
         .context-bar {
             background: var(--surface-1);
             border-bottom: 1px solid var(--border-emphasis);
@@ -97,10 +97,10 @@
         }
         .context-bar .context-value { color: var(--ink-primary); }
         .context-bar .context-value.amber { color: var(--amber); }
-        /* make muted context values more legible */
+        
         .context-bar .context-value.muted { color: var(--ink-secondary); }
 
-        /* Bank logo in context bar */
+        
         .context-bar .bank-logo {
             height: 56px;
             width: auto;
@@ -112,7 +112,7 @@
             border: 1px solid rgba(231, 223, 200, 0.06);
         }
 
-        /* ─── Main navigation ──────────────────────────────────────────────── */
+        
         header.app-nav {
             background: var(--surface-1);
             border-bottom: 1px solid var(--border-default);
@@ -140,7 +140,7 @@
             padding: 22px 24px 60px;
         }
 
-        /* ─── Cards (borders only) ─────────────────────────────────────────── */
+        
         .card {
             background: var(--surface-1);
             border: 1px solid var(--border-default);
@@ -172,7 +172,7 @@
             margin: 14px 0 8px;
         }
 
-        /* ─── Verdict cards (the important KPIs) ───────────────────────────── */
+        
         .verdict {
             background: var(--surface-2);
             border: 1px solid var(--border-default);
@@ -212,9 +212,9 @@
             letter-spacing: 0.02em;
             line-height: 1.5;
         }
-        .verdict.kpi { /* legacy alias */ }
+        .verdict.kpi {  }
 
-        /* Legacy .kpi → adopt verdict styling */
+        
         .kpi {
             background: var(--surface-2);
             border: 1px solid var(--border-default);
@@ -248,7 +248,7 @@
             line-height: 1.5;
         }
 
-        /* ─── Threshold bar — the signature visual constant ────────────────── */
+        
         .threshold-bar {
             position: relative;
             height: 8px;
@@ -294,7 +294,7 @@
             justify-content: space-between;
         }
 
-        /* ─── Grids ────────────────────────────────────────────────────────── */
+        
         .grid { display: grid; gap: 10px; }
         .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
         .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -303,7 +303,7 @@
             .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; }
         }
 
-        /* ─── Tables — banking density ─────────────────────────────────────── */
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -336,7 +336,7 @@
         }
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-        /* ─── Buttons ──────────────────────────────────────────────────────── */
+        
         .btn {
             font-family: var(--font-sans);
             font-size: 12px;
@@ -366,7 +366,7 @@
         }
         .btn.secondary { background: transparent; }
 
-        /* ─── Badges (banking pill, sharp corners) ─────────────────────────── */
+        
         .badge {
             display: inline-block;
             font-family: var(--font-mono);
@@ -405,7 +405,7 @@
             background: transparent;
         }
 
-        /* ─── Margin notes (replaces .help) ────────────────────────────────── */
+        
         .margin-note {
             border-left: 2px solid var(--amber);
             padding: 4px 0 4px 14px;
@@ -443,7 +443,7 @@
         }
         .margin-note li::marker { color: var(--amber); }
 
-        /* Legacy .help / .help-inline → adopt margin-note look */
+        
         .help {
             border-left: 2px solid var(--amber);
             padding: 4px 0 4px 14px;
@@ -479,7 +479,7 @@
         .help-inline .good { color: var(--ledger-green); }
         .help-inline .bad { color: var(--crimson); }
 
-        /* ─── Forms ────────────────────────────────────────────────────────── */
+        
         form label {
             display: block;
             margin-top: 14px;
@@ -514,7 +514,7 @@
             margin: 0;
         }
 
-        /* ─── Section title ────────────────────────────────────────────────── */
+        
         .section-title {
             margin: 18px 0 8px;
             font-family: var(--font-mono);
@@ -529,7 +529,7 @@
             color: var(--amber);
         }
 
-        /* ─── Messages ─────────────────────────────────────────────────────── */
+        
         .messages { margin-bottom: 14px; }
         .message {
             padding: 10px 14px;
@@ -544,7 +544,7 @@
         .message.warning { background: var(--ochre-bg); border-color: rgba(192, 136, 80, 0.4); color: var(--ochre); }
         .message.info    { background: var(--amber-bg-soft); border-color: rgba(212, 168, 73, 0.3); color: var(--amber); }
 
-        /* ─── Utility ──────────────────────────────────────────────────────── */
+        
         .muted { color: var(--ink-secondary); }
         .delta-up { color: var(--ledger-green); }
         .delta-down { color: var(--crimson); }
@@ -565,7 +565,7 @@
             color: var(--ink-secondary);
         }
 
-        /* ─── Breadcrumbs ─────────────────────────────────────────────────── */
+        
         .breadcrumbs {
             font-family: var(--font-mono);
             font-size: 11px;
@@ -581,7 +581,7 @@
         .breadcrumbs .sep { color: var(--ink-muted); }
         .breadcrumbs .current { color: var(--ink-primary); }
 
-        /* ─── Detail layout with sticky TOC ────────────────────────────────── */
+        
         .detail-layout {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 220px;
@@ -624,7 +624,7 @@
             .detail-toc { display: none; }
         }
 
-        /* Bar (legacy from previous design — keep for backward compat) */
+        
         .bar {
             height: 4px;
             background: var(--inset);

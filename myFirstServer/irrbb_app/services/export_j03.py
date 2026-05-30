@@ -8,7 +8,7 @@ PRODUCTS_PASIVOS = {'Central bank': {'codigo': '0220', 'fila': 23}, 'Interbank':
 def export_excel(fecha, activos, pasivos, banco_name):
     wb = openpyxl.load_workbook(filename='template.xlsx')
     ws = wb.active
-    # locate label positions for Bank, Currency and Date to write values reliably
+
     def find_label(label_texts):
         for r in range(1, 40):
             for c in range(1, 40):
@@ -19,7 +19,6 @@ def export_excel(fecha, activos, pasivos, banco_name):
                         if lt in s:
                             return (r, c)
         return None
-
     bank_pos = find_label(['bank', 'bank:'])
     currency_pos = find_label(['currency', 'currency:'])
     date_pos = find_label(['date', 'date:'])
@@ -35,7 +34,6 @@ def export_excel(fecha, activos, pasivos, banco_name):
         ws.cell(row=date_pos[0], column=date_pos[1] + 1).value = fecha
     else:
         ws['C5'] = fecha
-    # Columns for carrying amount and duration detected in template
     CARRYING_COL = 4
     DURATION_COL = 5
     for producto, data in activos.items():
@@ -46,7 +44,6 @@ def export_excel(fecha, activos, pasivos, banco_name):
                 columna = scenario_info['columna']
                 valor = scenario.get(field_name, 0)
                 ws.cell(row=fila, column=columna).value = abs(valor)
-            # write carrying amount and duration if available
             carrying = data.get('carrying_amount', data.get('nominal', 0))
             duration = data.get('duration', 0.0)
             ws.cell(row=fila, column=CARRYING_COL).value = carrying
@@ -59,7 +56,6 @@ def export_excel(fecha, activos, pasivos, banco_name):
                 columna = scenario_info['columna']
                 valor = scenario.get(field_name, 0)
                 ws.cell(row=fila, column=columna).value = abs(valor)
-            # write carrying amount and duration if available
             carrying = data.get('carrying_amount', data.get('nominal', 0))
             duration = data.get('duration', 0.0)
             ws.cell(row=fila, column=CARRYING_COL).value = carrying
