@@ -5,14 +5,10 @@
 
 <div class="card">
     <h2>Bandeja de aprobaciones</h2>
-    <p class="muted" style="font-family: var(--font-mono); font-size: 11px;">
-        Cálculos pendientes de la firma del checker. Sólo puedes aprobar lo que NO has subido tú (segregación de funciones).
-    </p>
     <div class="margin-note">
-        <span class="margin-note-label">CUATRO OJOS</span>
-        En banca regulada, todo cálculo que se reporta al supervisor debe ser <b>verificado por una persona distinta</b> al que lo generó.
-        Es la regla de los "cuatro ojos". Sin doble firma, no se puede descargar el J03.
-    </div>
+        <span class="margin-note-label">CUATRO OJOS </span>
+        Todo cálculo que se reporta al supervisor debe ser verificado por una persona distinta al que lo generó. 
+        </div>
 </div>
 
 <div class="card">
@@ -28,7 +24,7 @@
                 <th>Autor</th>
                 <th class="num">EVE base</th>
                 <th>SOT EVE</th>
-                <th>Impacto NII</th>
+                <th class="num">Impacto NII</th>
                 <th></th>
             </tr>
         </thead>
@@ -51,6 +47,7 @@
                 </td>
                 <td>
                     <a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Revisar</a>
+                    <a href=""#" class="btn secondary">Rechazar</a>
                     <a href="{% url 'detail' s.obj.pk %}?approve=1" class="btn primary">Aprobar</a>
                 </td>
             </tr>
@@ -76,7 +73,7 @@
                 <th>Fecha cálculo</th>
                 <th class="num">EVE base</th>
                 <th>SOT EVE</th>
-                <th>Impacto NII</th>
+                <th class="num">Impacto NII</th>
                 <th></th>
             </tr>
         </thead>

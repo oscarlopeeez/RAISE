@@ -21,11 +21,6 @@
 <div style="background:#06101a; padding:12px; border-radius:8px; margin-bottom:12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <div style="font-weight:600">Visualización</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <label style="font-size:13px"><input id="toggle-shocks" type="checkbox"> Mostrar shocks</label>
-            <label style="font-size:13px"><input id="toggle-market" type="checkbox" checked> Mostrar curva BCE</label>
-            
-        </div>
     </div>
     <div style="position: relative; height:360px;">
         <canvas id="curve-chart" style="width:100%; height:100%;"></canvas>
@@ -81,52 +76,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const ctx = canvas.getContext('2d');
     const datasets = payload.datasets.map(ds => Object.assign({}, ds));
-    const toggleShocks = document.getElementById('toggle-shocks');
-    const toggleMarket = document.getElementById('toggle-market');
-    const selectScenario = document.getElementById('select-scenario');
-
     
-    const scenarioMap = {
-        'rate_parallel_up': 'Parallel up',
-        'rate_parallel_down': 'Parallel down',
-        'rate_short_up': 'Short up',
-        'rate_short_down': 'Short down',
-        'rate_steepener': 'Steepener',
-        'rate_flattener': 'Flattener'
-    };
-    const selKey = '{{ selected_scenario|default:"rate_parallel_up" }}';
-
-    
-    function findDatasetLabelForOptionText(optionText) {
-        if (!optionText) return null;
-        const tokens = optionText.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-        if (!tokens.length) return null;
-        
-        let best = { label: null, score: 0 };
-        for (const d of datasets) {
-            if (!d.label) continue;
-            const lab = d.label.toLowerCase();
-            let score = 0;
-            for (const t of tokens) if (lab.includes(t)) score++;
-            if (score > best.score) best = { label: d.label, score };
-        }
-        if (best.score > 0) return best.label;
-        return null;
-    }
-
-    const selLabel = findDatasetLabelForOptionText(scenarioMap[selKey]) || 'Curva base';
-
-    
-    datasets.forEach(d => {
-        if (d.label && d.label !== 'Curva base' && d.label !== 'Mercado (BCE)') {
-            
-            d.hidden = true;
-        }
-    });
-    
-    if (selLabel) {
-        datasets.forEach(d => { if (d.label === selLabel) d.hidden = false; });
-    }
 
     
     const config = {
@@ -147,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const chart = new Chart(ctx, config);
 
     
-    function styleDatasets(selectedLabel) {
+    function styleDatasets() {
         chart.data.datasets.forEach(ds => {
             if (!ds.label) return;
             if (ds.label === 'Curva base') {
@@ -159,82 +109,15 @@ document.addEventListener('DOMContentLoaded', function(){
                 ds.pointRadius = 3;
                 ds.borderDash = [6,4];
             } else {
-                
-                if (selectedLabel && ds.label === selectedLabel) {
-                    ds.hidden = false;
-                    ds.borderWidth = 3;
-                    ds.pointRadius = 4;
-                } else {
-                    ds.borderWidth = 1;
-                    ds.pointRadius = 0;
-                    
-                }
+                ds.borderWidth = 1.25;
+                ds.pointRadius = 0;
                 ds.borderDash = [];
             }
         });
     }
 
-    
-    try {
-        const shocksOnInit = toggleShocks ? toggleShocks.checked : false;
-        const marketOnInit = toggleMarket ? toggleMarket.checked : true;
-        
-        chart.data.datasets.forEach(ds => { if (ds.label === 'Mercado (BCE)') ds.hidden = !marketOnInit; });
-        
-        if (!shocksOnInit) {
-            chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = true; });
-        } else {
-            const selectedOptionText = selectScenario ? scenarioMap[selectScenario.value] : scenarioMap[selKey];
-            const selectedDatasetLabel = findDatasetLabelForOptionText(selectedOptionText) || selLabel;
-            chart.data.datasets.forEach(ds => { if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') ds.hidden = (ds.label !== selectedDatasetLabel); });
-        }
-        
-        const initSelectedLabel = selectScenario ? findDatasetLabelForOptionText(scenarioMap[selectScenario.value]) : selLabel;
-        styleDatasets(initSelectedLabel);
-        chart.update();
-    } catch (e) { console.warn('init apply failed', e); }
-
-    if (toggleShocks) {
-        toggleShocks.addEventListener('change', () => {
-            const show = toggleShocks.checked;
-            const selectedLabel = selectScenario ? findDatasetLabelForOptionText(scenarioMap[selectScenario.value]) : selLabel;
-            chart.data.datasets.forEach(ds => {
-                if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') {
-                    ds.hidden = show ? (ds.label !== selectedLabel) : true;
-                }
-            });
-            chart.update();
-        });
-    }
-
-    if (toggleMarket) {
-        toggleMarket.addEventListener('change', () => {
-            chart.data.datasets.forEach(ds => { if (ds.label === 'Mercado (BCE)') ds.hidden = !toggleMarket.checked; });
-            chart.update();
-        });
-    }
-
-    if (selectScenario) {
-        selectScenario.addEventListener('change', (e) => {
-            const newKey = e.target.value;
-            const optionText = scenarioMap[newKey];
-            const newLabel = findDatasetLabelForOptionText(optionText) || selLabel;
-            
-            if (toggleShocks && !toggleShocks.checked) {
-                toggleShocks.checked = true;
-            }
-            
-            chart.data.datasets.forEach(ds => {
-                if (ds.label && ds.label !== 'Curva base' && ds.label !== 'Mercado (BCE)') {
-                    ds.hidden = (ds.label !== newLabel);
-                }
-                if (ds.label === 'Mercado (BCE)') ds.hidden = !(toggleMarket ? toggleMarket.checked : true);
-            });
-            
-            styleDatasets(newLabel);
-            chart.update();
-        });
-    }
+    styleDatasets();
+    chart.update();
     
     window.curveChart = chart;
 });

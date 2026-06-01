@@ -568,8 +568,8 @@ def download_template (request ):
     wb =Workbook ()
     ws =wb .active 
     headers =['NumeroContrato','Producto','ActivoPasivo','Nominal','FechaInicio','FechaVencimiento','TipoInteres','Amortizacion','CuponSpread','Curva','Frecuencia']
-    example_row1 =['C001','Crédito Hipotecario','ACTIVO',1000000 ,'2023-01-01','2033-01-01','FIJO','ALEMANA',5.0 ,'BASE',1 ]
-    example_row2 =['D001','Depósito a Plazo','PASIVO',500000 ,'2023-06-01','2024-06-01','VARIABLE','BULLET',3.0 ,'BASE',4 ]
+    example_row1 =['CONT128','Interbank','PASIVO',962434 ,'2025-12-29','2026-12-14','FIJO','BULLET',2.31 ,'BASE',2 ]
+    example_row2 =['CONT063','Term deposits','PASIVO',1002000 ,'2024-11-17','2028-10-06','VARIABLE','ALEMANA',2.09 ,'BASE',12 ]
     ws .append (headers )
     ws .append (example_row1 )
     ws .append (example_row2 )
