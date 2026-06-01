@@ -162,10 +162,15 @@ def _curve_snapshot(curve_df):
     return sub.to_dict(orient='records')
 
 @transaction.atomic
-def run_balance_pricing(banco: Banco, uploaded_by=None, valuation_date=None, market_curve=None):
+def run_balance_pricing(banco: Banco, uploaded_by=None, valuation_date=None, market_curve=None, contract_ids=None):
     if valuation_date is None:
         valuation_date = date.today()
-    contratos = list(banco.contratos.all())
+
+    if contract_ids:
+        contratos_qs = banco.contratos.filter(id__in=contract_ids)
+    else:
+        contratos_qs = banco.contratos.all()
+    contratos = list(contratos_qs)
     if not contratos:
         return None
     if market_curve is None:
@@ -175,9 +180,43 @@ def run_balance_pricing(banco: Banco, uploaded_by=None, valuation_date=None, mar
         raise RuntimeError('No hay curva de mercado disponible. Ejecuta el comando fetch_ecb_curve para descargar la curva BCE.')
     curve_df = build_curve_from_market(market_curve)
     curve_source = {'type': 'market', 'source': market_curve.source, 'reference_date': market_curve.reference_date.isoformat(), 'fetched_at': market_curve.fetched_at.isoformat(), 'currency': market_curve.currency, 'market_curve_id': market_curve.pk}
-    activos, pasivos = _process_contracts(banco, curve_df, valuation_date)
+    def _process_selected_contracts(contratos_list, curve_df, valuation_date=None):
+        activos_local = {}
+        pasivos_local = {}
+        activos_cf = {}
+        pasivos_cf = {}
+        for contrato in contratos_list:
+            cf = build_cashflows(contrato, curve_df, valuation_date)
+            if contrato.activo_pasivo == 'ACTIVO':
+                _act_dict(contrato.producto, contrato, cf, activos_local, activos_cf)
+            else:
+                _act_dict(contrato.producto, contrato, cf, pasivos_local, pasivos_cf)
+        _calculate_eve_nii(activos_local, activos_cf, curve_df, valuation_date)
+        _calculate_eve_nii(pasivos_local, pasivos_cf, curve_df, valuation_date)
+        return activos_local, pasivos_local
+
+    activos, pasivos = _process_selected_contracts(contratos, curve_df, valuation_date)
     eve_results, nii_results = _aggregate_results(activos, pasivos)
-    contributions = compute_contract_contributions(banco, curve_df, valuation_date)
+    contributions = []
+    for c in contratos:
+        cf = build_cashflows(c, curve_df, valuation_date)
+        row = {'contract_id': c.id, 'numero_contrato': c.numero_contrato, 'producto': c.producto, 'activo_pasivo': c.activo_pasivo, 'nominal': float(c.nominal), 'tipo_interes': c.tipo_interes, 'tipo_amortizacion': c.tipo_amortizacion, 'fecha_vencimiento': c.fecha_vencimiento.isoformat()}
+        if cf.empty:
+            for key in EVE_SCENARIO_COLS:
+                row[key] = 0.0
+        else:
+            for key, col in EVE_SCENARIO_COLS.items():
+                disc = discount_cashflows(cf, curve_df, col)
+                row[key] = float(disc['pv'].sum())
+        try:
+            nii_res = calculate_nii(cf, curve_df)
+            for k, v in nii_res.items():
+                row[k] = float(v)
+        except Exception:
+            row['nii_base'] = row.get('nii_base', 0.0)
+            row['nii_parallel_up'] = row.get('nii_parallel_up', 0.0)
+            row['nii_parallel_down'] = row.get('nii_parallel_down', 0.0)
+        contributions.append(row)
     metadata = {'curve_source': curve_source, 'curve_snapshot': _curve_snapshot(curve_df), 'contributions': contributions, 'contract_ids': [c.id for c in contratos], 'valuation_date': valuation_date.isoformat(), 'shocks_bp': {'parallel': 225, 'short': 350, 'long': 200}, 'currency': 'EUR'}
     resultado = ResultadoBalance.objects.create(banco=banco, uploaded_by=uploaded_by, valuation_date=valuation_date, tier1_capital=banco.tier1_capital, eve_base=eve_results.get('eve_base', 0), eve_parallel_up=eve_results.get('eve_parallel_up', 0), eve_parallel_down=eve_results.get('eve_parallel_down', 0), eve_steepener=eve_results.get('eve_steepener', 0), eve_flattener=eve_results.get('eve_flattener', 0), eve_short_up=eve_results.get('eve_short_up', 0), eve_short_down=eve_results.get('eve_short_down', 0), nii_base=nii_results.get('nii_base', 0), nii_parallel_up=nii_results.get('nii_parallel_up', 0), nii_parallel_down=nii_results.get('nii_parallel_down', 0), metadata=metadata)
     return {'activos': activos, 'pasivos': pasivos, 'resultado': resultado}

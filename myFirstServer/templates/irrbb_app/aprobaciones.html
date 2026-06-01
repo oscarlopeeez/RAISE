@@ -28,7 +28,7 @@
                 <th>Autor</th>
                 <th class="num">EVE base</th>
                 <th>SOT EVE</th>
-                <th>SOT NII</th>
+                <th>Impacto NII</th>
                 <th></th>
             </tr>
         </thead>
@@ -45,10 +45,9 @@
                     {% elif s.sot.eve_pass %}<span class="badge pass">APROBADO {{ s.sot.eve_pct|floatformat:1 }}%</span>
                     {% else %}<span class="badge fail">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
                 </td>
-                <td>
-                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
-                    {% elif s.sot.nii_pass %}<span class="badge pass">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
-                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
+                <td class="num">
+                    {{ s.nii_worst.delta|floatformat:0|intcomma }}
+                    <span class="muted">({{ s.nii_worst.label }})</span>
                 </td>
                 <td>
                     <a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Revisar</a>
@@ -77,7 +76,7 @@
                 <th>Fecha cálculo</th>
                 <th class="num">EVE base</th>
                 <th>SOT EVE</th>
-                <th>SOT NII</th>
+                <th>Impacto NII</th>
                 <th></th>
             </tr>
         </thead>
@@ -93,10 +92,9 @@
                     {% elif s.sot.eve_pass %}<span class="badge pass">APROBADO {{ s.sot.eve_pct|floatformat:1 }}%</span>
                     {% else %}<span class="badge fail">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
                 </td>
-                <td>
-                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
-                    {% elif s.sot.nii_pass %}<span class="badge pass">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
-                    {% else %}<span class="badge fail">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
+                <td class="num">
+                    {{ s.nii_worst.delta|floatformat:0|intcomma }}
+                    <span class="muted">({{ s.nii_worst.label }})</span>
                 </td>
                 <td><a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Ver</a></td>
             </tr>

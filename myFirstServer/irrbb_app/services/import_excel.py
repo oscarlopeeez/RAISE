@@ -124,6 +124,7 @@ def load_contracts_from_excel(archivo, banco, curva_default='EURIBOR'):
     df.columns = df.columns.str.lower()
     inserted = 0
     updated = 0
+    processed_ids = []
     for i, row in df.iterrows():
         num_fila = i + 2
         numero = _required_text(row, 'numerocontrato', num_fila)
@@ -144,9 +145,10 @@ def load_contracts_from_excel(archivo, banco, curva_default='EURIBOR'):
             raise ValueError(f'Fila {num_fila} ({numero}): {exc}') from exc
         if defaults['fecha_inicio'] >= defaults['fecha_vencimiento']:
             raise ValueError(f'Fila {num_fila} ({numero}): fechaInicio debe ser anterior a fechaVencimiento.')
-        _, created = Contrato.objects.update_or_create(banco=banco, numero_contrato=numero, defaults=defaults)
+        instance, created = Contrato.objects.update_or_create(banco=banco, numero_contrato=numero, defaults=defaults)
+        processed_ids.append(instance.id)
         if created:
             inserted += 1
         else:
             updated += 1
-    return {'inserted': inserted, 'updated': updated, 'total': inserted + updated}
+    return {'inserted': inserted, 'updated': updated, 'total': inserted + updated, 'contract_ids': processed_ids}

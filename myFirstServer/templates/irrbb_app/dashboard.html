@@ -145,8 +145,8 @@
     <div class="margin-note">
         <span class="margin-note-label">Registro de auditoría</span>
         Cada fila es una <b>instantánea</b> (cálculo guardado con su curva y contratos).
-        La columna <b>SOT</b> es el veredicto del supervisor: <span class="good">APROBADO</span> = dentro del umbral; <span class="bad">RECHAZADO</span> = outlier, banco en lista corta del regulador.
-        Umbrales EBA: EVE ≤ 15% Tier 1, NII ≤ 5% Tier 1.
+        La columna <b>SOT EVE</b> muestra el veredicto del supervisor: <span class="good">APROBADO</span> = dentro del umbral; <span class="bad">RECHAZADO</span> = supera el umbral.
+        El NII se muestra solo como métrica informativa y no tiene veredicto regulatorio.
     </div>
     {% if latest_results %}
     <div class="table-responsive">
@@ -163,7 +163,6 @@
                 <th>SOT EVE</th>
                 <th class="num">NII base</th>
                 <th class="num">Δ NII peor</th>
-                <th>SOT NII</th>
                 <th></th>
             </tr>
         </thead>
@@ -186,14 +185,9 @@
                     {% else %}<span class="badge pasivo">RECHAZADO {{ s.sot.eve_pct|floatformat:1 }}%</span>{% endif %}
                 </td>
                 <td class="num">{{ s.obj.nii_base|floatformat:0|intcomma }}</td>
-                <td class="num delta-{{ s.nii_worst.sign|default:'zero' }}">
+                <td class="num">
                     {{ s.nii_worst.delta|floatformat:0|intcomma }}
                     <span class="muted">({{ s.nii_worst.label }})</span>
-                </td>
-                <td>
-                    {% if s.sot.missing_tier1 %}<span class="badge neutral">—</span>
-                    {% elif s.sot.nii_pass %}<span class="badge activo">APROBADO {{ s.sot.nii_pct|floatformat:1 }}%</span>
-                    {% else %}<span class="badge pasivo">RECHAZADO {{ s.sot.nii_pct|floatformat:1 }}%</span>{% endif %}
                 </td>
                 <td><a href="{% url 'detail' s.obj.pk %}" class="btn secondary">Detalle</a></td>
             </tr>

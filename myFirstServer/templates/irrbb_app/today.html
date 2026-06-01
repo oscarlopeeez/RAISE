@@ -36,23 +36,17 @@
                     <div class="verdict-sub">Tier 1 no configurado</div>
                 </div>
             {% else %}
-                {% if latest.sot.ok %}
+                {% if latest.sot.eve_pass %}
                     <div class="verdict pass">
-                        <div class="verdict-label">SOT APROBADO</div>
+                        <div class="verdict-label">SOT EVE APROBADO</div>
                         <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
-                        <div class="verdict-sub">EVE y NII dentro de los umbrales regulatorios.</div>
-                    </div>
-                {% elif latest.sot.eve_pass or latest.sot.nii_pass %}
-                    <div class="verdict warn">
-                        <div class="verdict-label">SOT EN VIGILANCIA</div>
-                        <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
-                        <div class="verdict-sub">Una métrica cercana al umbral regulatorio.</div>
+                        <div class="verdict-sub">EVE dentro del umbral del 15%.</div>
                     </div>
                 {% else %}
                     <div class="verdict fail">
-                        <div class="verdict-label">SOT RECHAZADO</div>
+                        <div class="verdict-label">SOT EVE RECHAZADO</div>
                         <div class="verdict-value">EVE {{ latest.sot.eve_pct|floatformat:1 }}% · NII {{ latest.sot.nii_pct|floatformat:1 }}%</div>
-                        <div class="verdict-sub">Se detectó un incumplimiento regulatorio.</div>
+                        <div class="verdict-sub">EVE supera el umbral del 15%.</div>
                     </div>
                 {% endif %}
             {% endif %}
@@ -64,15 +58,16 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-secondary);"> <span>SOT EVE</span><span>{{ latest.sot.eve_pct|floatformat:1 }}% del Tier 1 (umbral {{ latest.sot.eve_threshold_pct|floatformat:0 }}%)</span></div>
                 <div class="threshold-bar" style="height:10px; border-radius:6px; background:var(--inset); overflow:hidden; margin-top:6px;">
-                    {% widthratio latest.sot.eve_pct latest.sot.eve_threshold_pct 100 as ev_w %}
-                    <div class="fill {% if latest.sot.eve_pass %}{% if latest.sot.eve_pct >= 10 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}" style="width: {{ ev_w }}%; height:100%;"></div>
+                    {% widthratio latest.sot.eve_pct 100 100 as ev_w %}
+                    <div class="fill {% if latest.sot.eve_pass %}{% if latest.sot.eve_pct >= 10 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}" style="width: {{ ev_w }}%; height:100%; max-width:100%;"></div>
+                    <div class="threshold" style="left:15%;"></div>
                 </div>
             </div>
             <div>
-                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-secondary);"> <span>SOT NII</span><span>{{ latest.sot.nii_pct|floatformat:1 }}% del Tier 1 (umbral {{ latest.sot.nii_threshold_pct|floatformat:0 }}%)</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-secondary);"> <span>NII:</span><span>{{ latest.sot.nii_pct|floatformat:1 }}% del Tier 1</span></div>
                 <div class="threshold-bar" style="height:10px; border-radius:6px; background:var(--inset); overflow:hidden; margin-top:6px;">
-                    {% widthratio latest.sot.nii_pct latest.sot.nii_threshold_pct 100 as ni_w %}
-                    <div class="fill {% if latest.sot.nii_pass %}{% if latest.sot.nii_pct >= 3 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}" style="width: {{ ni_w }}%; height:100%;"></div>
+                    {% widthratio latest.sot.nii_pct 100 100 as ni_w %}
+                    <div class="fill" style="width: {{ ni_w }}%; height:100%; background: var(--amber);"></div>
                 </div>
             </div>
             {% endif %}

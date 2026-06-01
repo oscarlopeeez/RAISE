@@ -147,11 +147,9 @@ class TodayView (LoginRequiredMixin ,TemplateView ):
                 sot =latest_summary .get ('sot',{})
                 eve_w =latest_summary .get ('eve_worst')
                 nii_w =latest_summary .get ('nii_worst')
-                if not sot .get ('ok'):
-                    if not sot .get ('eve_pass')and sot .get ('eve_pct',0 )>=sot .get ('nii_pct',0 ):
+                if not sot .get ('eve_pass'):
+                    if eve_w :
                         main_risk_driver =f"Peor escenario EVE: {eve_w ['label']}."
-                    elif not sot .get ('nii_pass'):
-                        main_risk_driver =f"Peor escenario NII: {nii_w ['label']}."
                 if not main_risk_driver and portfolio :
                     bullet_pct =0 
                     for a in portfolio .get ('amortizacion',[]):
@@ -166,8 +164,6 @@ class TodayView (LoginRequiredMixin ,TemplateView ):
                 if not main_risk_driver :
                     if eve_w :
                         main_risk_driver =f"{eve_w ['label']} impulsa la sensibilidad del EVE."
-                    elif nii_w :
-                        main_risk_driver =f"{nii_w ['label']} impulsa la sensibilidad del NII."
                     else :
                         main_risk_driver ='No se detecta un factor de riesgo dominante.'
         except Exception :
@@ -254,7 +250,7 @@ class UploadContractsView (LoginRequiredMixin ,FormView ):
         if not market_curve :
             messages .error (self .request ,'No hay curva de mercado descargada. Ejecuta el comando fetch_ecb_curve antes de importar.')
             return self .form_invalid (form )
-        contract_pricing .run_balance_pricing (banco ,uploaded_by =uploaded_by ,market_curve =market_curve )
+        contract_pricing .run_balance_pricing (banco ,uploaded_by =uploaded_by ,market_curve =market_curve, contract_ids=result.get('contract_ids'))
         return redirect ('dashboard')
 
 class ResultsHistoryView (LoginRequiredMixin ,ListView ):

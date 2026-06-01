@@ -60,10 +60,10 @@
       <div class="verdict-value">{{ sot.eve_pct|floatformat:2 }}%</div>
       <div class="verdict-sub">Peor escenario: {{ sot.eve_worst_label }} · Pérdida {{ sot.eve_loss|floatformat:0|intcomma }} €</div>
     </div>
-    <div class="verdict {% if sot.nii_pass %}{% if sot.nii_pct >= 3 %}warn{% else %}pass{% endif %}{% else %}fail{% endif %}">
-      <div class="verdict-label">SOT NII</div>
-      <div class="verdict-value">{{ sot.nii_pct|floatformat:2 }}%</div>
-      <div class="verdict-sub">Peor escenario: {{ sot.nii_worst_label }} · Pérdida {{ sot.nii_loss|floatformat:0|intcomma }} €</div>
+    <div class="kpi">
+      <div class="label">Impacto NII</div>
+      <div class="value">{{ sot.nii_loss|floatformat:0|intcomma }} €</div>
+      <div class="sub">Peor escenario: {{ sot.nii_worst_label }} · NII base {{ resultado.nii_base|floatformat:0|intcomma }} €</div>
     </div>
   </div>
 </div>
