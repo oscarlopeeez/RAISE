@@ -33,7 +33,6 @@ def _scenario_rows (obj ,base_attr ,scenarios ):
         delta_pct =delta /base *100 if base else 0 
         rows .append ({'label':label ,'attr':attr ,'value':val ,'delta':delta ,'delta_pct':delta_pct ,'sign':'up'if delta >0 else 'down'if delta <0 else ''})
     return rows 
-
 def _worst (rows ):
     if not rows :
         return None 
@@ -248,7 +247,7 @@ class UploadContractsView (LoginRequiredMixin ,FormView ):
             result =import_excel .load_contracts_from_excel (form .cleaned_data ['excel_file'],banco )
             messages .success (self .request ,f"Import OK: {result ['inserted']} nuevos, {result ['updated']} actualizados ({result ['total']} total)")
         except Exception as e :
-            messages .error (self .request ,f' Error: {str (e )}')
+            messages .error (self .request ,f'Error de importación: {str (e )}')
             return self .form_invalid (form )
 
         market_curve =MarketCurve .objects .first ()
@@ -558,7 +557,11 @@ class CurveView (LoginRequiredMixin ,TemplateView ):
 def start (request ):
     if request .user .is_authenticated :
         return redirect ('dashboard')
-    return render (request ,'irrbb_app/start.html')
+    # Mostrar contadores públicos en la página de inicio para dar sensación de adopción
+    n_bancos = Banco.objects.count()
+    n_contratos = Contrato.objects.count()
+    n_calculos = ResultadoBalance.objects.count()
+    return render(request, 'irrbb_app/start.html', {'n_bancos': n_bancos, 'n_contratos': n_contratos, 'n_calculos': n_calculos})
 
 def LogOutView (request ):
     logout (request )

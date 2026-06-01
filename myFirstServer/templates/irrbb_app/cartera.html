@@ -154,7 +154,6 @@
 {% endblock %}
 
     {% block extra_js %}
-    <script src="https:
     <script>
     document.addEventListener('DOMContentLoaded', function(){
         try {
@@ -174,7 +173,7 @@
                 });
             }
 
-                    if (window.Chart && document.getElementById('mix-donut')) {
+            if (window.Chart && document.getElementById('mix-donut')) {
                 const ctx2 = document.getElementById('mix-donut').getContext('2d');
                 const fixed = Number({{ kpis.pct_fixed|default:0 }});
                 const variable = Number({{ kpis.pct_variable|default:0 }});
@@ -207,7 +206,7 @@
                 } catch(e){console.warn('mix legend build failed', e)}
             }
 
-                if (window.Chart && document.getElementById('amortization-donut')) {
+            if (window.Chart && document.getElementById('amortization-donut')) {
                 const ctx3 = document.getElementById('amortization-donut').getContext('2d');
                 const amortLabels = [];
                 const amortData = [];
@@ -217,7 +216,7 @@
                 amortData.push(Number({{ a.pct|default:0 }}));
                 amortColors.push({% if forloop.counter0 == 0 %}'#58a6ff'{% elif forloop.counter0 == 1 %}'#d4a849'{% else %}'#3fb950'{% endif %});
                 {% endfor %}
-                    if (amortData.length) {
+                if (amortData.length) {
                     new Chart(ctx3, {
                         type: 'doughnut',
                         data: {

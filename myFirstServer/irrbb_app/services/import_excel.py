@@ -12,6 +12,56 @@ def normalize_cupon_spread(value):
         v = v / 100.0
     return v
 
+def _row_identity(row, num_fila):
+    numero = str(row.get('numerocontrato', '')).strip()
+    return numero or f'fila {num_fila}'
+
+def _required_text(row, field, num_fila):
+    value = row.get(field, '')
+    text = '' if pd.isna(value) else str(value).strip()
+    if not text:
+        raise ValueError(f'Fila {num_fila}: {field} vacío.')
+    return text
+
+def _optional_text(row, field):
+    value = row.get(field, '')
+    return '' if pd.isna(value) else str(value).strip()
+
+def _required_choice(row, field, allowed, num_fila):
+    value = _required_text(row, field, num_fila).upper()
+    if value not in allowed:
+        raise ValueError(f'Fila {num_fila}: {field} debe ser {", ".join(sorted(allowed))}.')
+    return value
+
+def _required_float(row, field, num_fila, positive=False):
+    value = row.get(field)
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f'Fila {num_fila}: {field} no es un número válido.')
+    if positive and number <= 0:
+        raise ValueError(f'Fila {num_fila}: {field} debe ser positivo.')
+    return number
+
+def _required_date(row, field, num_fila):
+    value = row.get(field)
+    try:
+        return pd.to_datetime(value).date()
+    except (ValueError, TypeError, AttributeError):
+        raise ValueError(f'Fila {num_fila}: {field} no es una fecha válida.')
+
+def _required_int(row, field, num_fila, minimum=None, maximum=None):
+    value = row.get(field)
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f'Fila {num_fila}: {field} no es un entero válido.')
+    if minimum is not None and number < minimum:
+        raise ValueError(f'Fila {num_fila}: {field} debe ser mayor o igual que {minimum}.')
+    if maximum is not None and number > maximum:
+        raise ValueError(f'Fila {num_fila}: {field} debe ser menor o igual que {maximum}.')
+    return number
+
 def validate_contracts_excel(archivo):
     errors = []
     columns_required = ['numerocontrato', 'producto', 'activopasivo', 'nominal', 'fechainicio', 'fechavencimiento', 'tipointeres', 'amortizacion', 'cuponspread', 'curva', 'frecuencia']
@@ -74,9 +124,26 @@ def load_contracts_from_excel(archivo, banco, curva_default='EURIBOR'):
     df.columns = df.columns.str.lower()
     inserted = 0
     updated = 0
-    for _, row in df.iterrows():
-        numero = str(row.get('numerocontrato', '')).strip()
-        defaults = dict(producto=row.get('producto', ''), activo_pasivo=str(row.get('activopasivo', '')).upper(), nominal=float(row.get('nominal', 0)), fecha_inicio=pd.to_datetime(row.get('fechainicio')).date(), fecha_vencimiento=pd.to_datetime(row.get('fechavencimiento')).date(), tipo_interes=str(row.get('tipointeres', '')).upper(), tipo_amortizacion=str(row.get('amortizacion', '')).upper(), cupon_spread=normalize_cupon_spread(row.get('cuponspread', 0)), curva_asociada=row.get('curva', curva_default), frecuencia_cupon=int(row.get('frecuencia', 1)))
+    for i, row in df.iterrows():
+        num_fila = i + 2
+        numero = _required_text(row, 'numerocontrato', num_fila)
+        try:
+            defaults = dict(
+                producto=_required_text(row, 'producto', num_fila),
+                activo_pasivo=_required_choice(row, 'activopasivo', VALID_ACTIVOPASIVO, num_fila),
+                nominal=_required_float(row, 'nominal', num_fila, positive=True),
+                fecha_inicio=_required_date(row, 'fechainicio', num_fila),
+                fecha_vencimiento=_required_date(row, 'fechavencimiento', num_fila),
+                tipo_interes=_required_choice(row, 'tipointeres', VALID_TIPOINTERES, num_fila),
+                tipo_amortizacion=_required_choice(row, 'amortizacion', VALID_AMORTIZACION, num_fila),
+                cupon_spread=normalize_cupon_spread(_required_float(row, 'cuponspread', num_fila)),
+                curva_asociada=_optional_text(row, 'curva') or curva_default,
+                frecuencia_cupon=_required_int(row, 'frecuencia', num_fila, minimum=1, maximum=12),
+            )
+        except ValueError as exc:
+            raise ValueError(f'Fila {num_fila} ({numero}): {exc}') from exc
+        if defaults['fecha_inicio'] >= defaults['fecha_vencimiento']:
+            raise ValueError(f'Fila {num_fila} ({numero}): fechaInicio debe ser anterior a fechaVencimiento.')
         _, created = Contrato.objects.update_or_create(banco=banco, numero_contrato=numero, defaults=defaults)
         if created:
             inserted += 1
