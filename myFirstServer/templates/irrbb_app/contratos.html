@@ -39,9 +39,13 @@
                 <option value="VARIABLE" {% if filters.tipo_interes == 'VARIABLE' %}selected{% endif %}>VARIABLE</option>
             </select>
         </label>
-        <label style="margin: 0; display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" name="solo_vencidos" value="1" {% if filters.solo_vencidos %}checked{% endif %}>
-            <span style="font-size: 11px; text-transform: none; letter-spacing: 0;">Sólo vencidos</span>
+        <label style="margin: 0;">
+            <span style="font-size: 10px;">ESTADO</span>
+            <select name="solo_vencidos" style="margin-top: 4px;">
+                <option value="">— todos —</option>
+                <option value="0" {% if filters.solo_vencidos == '0' %}selected{% endif %}>VIGENTE</option>
+                <option value="1" {% if filters.solo_vencidos == '1' %}selected{% endif %}>VENCIDO</option>
+            </select>
         </label>
         <div>
             <button type="submit" class="btn primary">Filtrar</button>
